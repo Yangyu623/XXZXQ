@@ -560,6 +560,22 @@ async function rejectUser(nickname) {
 $('#adminModal').addEventListener('click', e => { if (e.target === $('#adminModal')) $('#adminModal').classList.remove('active'); });
 
 // ========== 启动 ==========
+
+// 密码规则实时检测
+setTimeout(function(){
+  var pr=document.getElementById("pwdRules");
+  var pi=document.getElementById("passwordInput");
+  if(!pr||!pi)return;
+  var spans=pr.querySelectorAll(".rule");
+  pi.addEventListener("input",function(){
+    var p=pi.value;
+    var ok=[p.length>=8,/[A-Z]/.test(p),/[0-9]/.test(p),!p||/^[a-zA-Z0-9]+$/.test(p)];
+    for(var i=0;i<spans.length;i++){
+      if(ok[i]){spans[i].className="rule ok";spans[i].innerHTML=spans[i].innerHTML.replace("❌","✅");}
+      else{spans[i].className="rule";spans[i].innerHTML=spans[i].innerHTML.replace("✅","❌");}
+    }
+  });
+},200);
 function checkLogin() {
   const saved = localStorage.getItem('campus_wall_nickname');
   if (saved) {
