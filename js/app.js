@@ -112,6 +112,10 @@ passwordInput.addEventListener("input", () => {
   pwdRules.innerHTML = rules.map(r => "<span class=\"rule " + (r.ok ? "rule-ok" : "rule-fail") + "\">" + (r.ok ? "✅" : "❌") + " " + r.text + "</span>").join("");
 });
 
+
+// 初始渲染密码规则
+passwordInput.dispatchEvent(new Event('input'));
+
 switchLink.addEventListener("click", (e) => { e.preventDefault();
   isRegisterMode = !isRegisterMode;
   confirmGroup.style.display = isRegisterMode ? 'block' : 'none';
