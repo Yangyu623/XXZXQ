@@ -28,7 +28,7 @@ async function deleteComment(commentId) {
 checkLogin();
   commentListEl.querySelectorAll('.comment-del-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deleteComment(el.dataset.delCid); }));
 // js/app.js — 校园墙 v2
-  commentListEl.querySelectorAll('.comment-del-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deleteComment(el.dataset.delCid); }));
+
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
