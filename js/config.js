@@ -121,8 +121,7 @@ const db = {
     })
   }),
   rpc: async (fn, params) => {
-    const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
-    await api('POST', '/rpc/' + fn + '?' + qs);
+    await api('POST', '/rpc/' + fn, params);
     return { error: null };
   }
 };
