@@ -86,7 +86,7 @@ passwordInput.addEventListener("input", () => {
   pwdRules.innerHTML = rules.map(r => "<span class=\"rule " + (r.ok ? "rule-ok" : "rule-fail") + "\">" + (r.ok ? "✅" : "❌") + " " + r.text + "</span>").join("");
 });
 
-switchLink.addEventListener("click", () => {
+switchLink.addEventListener("click", (e) => { e.preventDefault();
   isRegisterMode = !isRegisterMode;
   confirmGroup.style.display = isRegisterMode ? 'block' : 'none';
   loginBtn.textContent = isRegisterMode ? '注 册' : '登 录';
