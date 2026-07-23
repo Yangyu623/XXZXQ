@@ -1,0 +1,61 @@
+﻿<!-- pages/square/square.wxml -->
+<scroll-view
+  scroll-y
+  class="post-list"
+  refresher-enabled
+  refresher-triggered=\"{{refreshing}}\"
+  bindrefresherrefresh=\"onRefresh\"
+  bindscrolltolower=\"onReachBottom\"
+  lower-threshold=\"100\"
+>
+  <view wx:if=\"{{posts.length === 0 && !loading}}\" class=\"empty-tip\">
+    <text>还没有帖子，快去发一条吧~</text>
+  </view>
+
+  <view wx:for=\"{{posts}}\" wx:key=\"_id\" class=\"post-item\" bindtap=\"goDetail\" data-id=\"{{item._id}}\">
+    <!-- 用户信息 -->
+    <view class=\"post-header\">
+      <image class=\"avatar\" src=\"{{item.avatarUrl || '/images/default-avatar.png'}}\" mode=\"aspectFill\" />
+      <view class=\"user-info\">
+        <text class=\"nickname\">{{item.isAnonymous ? '匿名用户' : item.nickName}}</text>
+        <text class=\"time\">{{item.createTimeText}}</text>
+      </view>
+    </view>
+
+    <!-- 帖子内容 -->
+    <view class=\"post-content\">
+      <text>{{item.content}}</text>
+    </view>
+
+    <!-- 帖子图片 -->
+    <view wx:if=\"{{item.images && item.images.length > 0}}\" class=\"post-images\">
+      <image
+        wx:for=\"{{item.images}}\"
+        wx:for-item=\"img\"
+        wx:key=\"*this\"
+        src=\"{{img}}\"
+        mode=\"aspectFill\"
+        class=\"post-image {{item.images.length === 1 ? 'single' : ''}}\"
+      />
+    </view>
+
+    <!-- 底部操作栏 -->
+    <view class=\"post-footer\">
+      <view class=\"action\" catchtap=\"toggleLike\" data-id=\"{{item._id}}\" data-index=\"{{index}}\">
+        <image class=\"icon\" src=\"{{item.isLiked ? '/images/icon-like-active.png' : '/images/icon-like.png'}}\" />
+        <text class=\"{{item.isLiked ? 'active' : ''}}\">{{item.likeCount || 0}}</text>
+      </view>
+      <view class=\"action\">
+        <image class=\"icon\" src=\"/images/icon-comment.png\" />
+        <text>{{item.commentCount || 0}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if=\"{{loading}}\" class=\"loading-tip\">
+    <text>加载中...</text>
+  </view>
+  <view wx:elif=\"{{!hasMore && posts.length > 0}}\" class=\"loading-tip\">
+    <text>—— 没有更多了 ——</text>
+  </view>
+</scroll-view>

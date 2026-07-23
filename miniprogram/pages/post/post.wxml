@@ -1,0 +1,42 @@
+﻿<!-- pages/post/post.wxml -->
+<view class="post-page">
+  <!-- 内容输入区 -->
+  <view class="input-area">
+    <textarea
+      placeholder=\"分享你的校园生活...\"
+      value=\"{{content}}\"
+      bindinput=\"onInput\"
+      maxlength=\"500\"
+      auto-height
+      class=\"content-input\"
+    />
+    <text class=\"word-count\">{{content.length}}/500</text>
+  </view>
+
+  <!-- 图片预览区 -->
+  <view class=\"image-area\" wx:if=\"{{images.length > 0}}\">
+    <view wx:for=\"{{images}}\" wx:key=\"*this\" class=\"image-item\">
+      <image src=\"{{item}}\" mode=\"aspectFill\" class=\"preview-image\" />
+      <view class=\"delete-btn\" catchtap=\"deleteImage\" data-index=\"{{index}}\">×</view>
+    </view>
+  </view>
+
+  <!-- 工具栏 -->
+  <view class=\"toolbar\">
+    <view class=\"tool-item\" bindtap=\"chooseImage\">
+      <image class=\"tool-icon\" src=\"/images/icon-image.png\" />
+      <text>图片</text>
+    </view>
+    <view class=\"tool-item anonymous\" bindtap=\"toggleAnonymous\">
+      <image class=\"tool-icon\" src=\"{{isAnonymous ? '/images/icon-anon-active.png' : '/images/icon-anon.png'}}\" />
+      <text class=\"{{isAnonymous ? 'active' : ''}}\">匿名</text>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class=\"submit-area\">
+    <button class=\"btn-primary submit-btn\" bindtap=\"submit\" loading=\"{{submitting}}\" disabled=\"{{submitting}}\">
+      {{submitting ? '发布中...' : '发布'}}
+    </button>
+  </view>
+</view>
