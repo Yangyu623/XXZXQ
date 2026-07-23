@@ -1,0 +1,32 @@
+﻿*** Begin Patch
+*** Update File: js/app.js
+@@
+ async function sha256s(salt, password) { return await sha256(salt + password); }
+ 
++// SHA-256 哈希（Web Crypto API）
++async function sha256(message) {
++  const msgBuffer = new TextEncoder().encode(message);
++  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
++  const hashArray = Array.from(new Uint8Array(hashBuffer));
++  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
++}
++
++// 注册冷却（防刷）
++function getRegCooldown() {
++  const last = localStorage.getItem("reg_last_attempt");
++  if (!last) return 0;
++  return Math.max(0, 5000 - (Date.now() - parseInt(last)));
++}
++
++// 验证码
++let captchaAnswer = 0;
++function generateCaptcha() {
++  const a = Math.floor(Math.random() * 20) + 1;
++  const b = Math.floor(Math.random() * 20) + 1;
++  captchaAnswer = a + b;
++  const el = document.getElementById("captchaQuestion");
++  if (el) el.textContent = a + " + " + b + " = ?";
++}
++
+ // ========== 底部导航 ==========
+*** End Patch

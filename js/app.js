@@ -54,6 +54,30 @@ function openImageViewer(url) { document.getElementById('viewerImg').src = url; 
 
 function generateSalt() { return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, "0")).join(""); }
 async function sha256s(salt, password) { return await sha256(salt + password); }
+// SHA-256 哈希（Web Crypto API）
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// 注册冷却（防刷）
+function getRegCooldown() {
+  const last = localStorage.getItem("reg_last_attempt");
+  if (!last) return 0;
+  return Math.max(0, 5000 - (Date.now() - parseInt(last)));
+}
+
+// 验证码
+let captchaAnswer = 0;
+function generateCaptcha() {
+  const a = Math.floor(Math.random() * 20) + 1;
+  const b = Math.floor(Math.random() * 20) + 1;
+  captchaAnswer = a + b;
+  const el = document.getElementById("captchaQuestion");
+  if (el) el.textContent = a + " + " + b + " = ?";
+}
 
 // ========== 底部导航 ==========
 $$('#bottomNav .nav-item').forEach(el => {
@@ -101,16 +125,20 @@ async function doRegister(nickname, password, confirm) {
 async function doLogin(nickname, password) {
   try {
     const { data } = await db.from('users').select('nickname,password_hash,status,is_admin').eq('nickname', nickname).get();
+    if (!data || data.length === 0) { showToast('用户不存在'); return; }
     const parts = (data[0].password_hash || '').split(':');
-    const salt = parts[0] || '';
-    const storedHash = parts[1] || data[0].password_hash;
-    const inputHash = await sha256s(salt, password);
-    if (storedHash !== inputHash) { showToast('密码错误'); return; }
+    if (parts.length === 1) {
+      const inputHash = await sha256(password);
+      if (data[0].password_hash !== inputHash) { showToast('密码错误'); return; }
+    } else {
+      const inputHash = await sha256s(parts[0], password);
+      if (parts[1] !== inputHash) { showToast('密码错误'); return; }
+    }
     if (data[0].status === 'pending') { showToast('账号待审核中，请等待管理员通过'); return; }
     if (data[0].status === 'rejected') { showToast('账号已被拒绝'); return; }
     if (data[0].status === 'disabled') { showToast('账号已被禁用'); return; }
     doLoginSuccess(nickname, data[0].is_admin);
-  } catch (err) { showToast('登录失败'); }
+  } catch (err) { console.error('登录错误:', err); showToast('登录失败: ' + (err.message || err.toString())); }
 }
 
 function doLoginSuccess(nickname, isAdmin) {
@@ -178,12 +206,6 @@ switchLink.addEventListener('click', (e) => {
     confirmGroup.style.display = 'none';
     document.getElementById('pwdRules').style.display = 'none';
     document.getElementById('captchaGroup').style.display = 'none';
-  }
-  if (confirm('确定要退出登录吗？')) {
-    localStorage.removeItem('campus_wall_nickname');
-    currentUser = null; headerUser.textContent = '';
-    postList.innerHTML = '<div class="tip">请先登录</div>';
-    loginModal.classList.add('active');
   }
 });
 
