@@ -292,7 +292,7 @@ submitPost.addEventListener('click', async () => {
       switchTab('panelSquare');
       loadPosts();
     }
-  } catch (err) { showToast('发布失败'); console.error(err); }
+  } catch (err) { showToast('发布失败: ' + (err.message || '网络异常')); console.error(err); }
   finally { submitPost.disabled = false; submitPost.textContent = '发布'; }
 });
 
