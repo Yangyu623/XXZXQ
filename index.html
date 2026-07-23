@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>校园墙</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- 登录弹窗 -->
+<div id="loginModal" class="modal active">
+  <div class="modal-content login-box">
+    <div class="login-icon">🏫</div>
+    <h2>校园墙</h2>
+    <p class="login-sub">和你的同学一起分享校园生活</p>
+    <div class="form-group">
+      <label>你的昵称</label>
+      <input type="text" id="nicknameInput" placeholder="输入昵称..." maxlength="12" />
+    </div>
+    <button class="btn btn-primary btn-block" id="loginBtn">进入校园墙</button>
+  </div>
+</div>
+
+<!-- 顶部导航 -->
+<header id="header">
+  <span class="header-title">🏫 校园墙</span>
+  <span class="header-user" id="headerUser"></span>
+</header>
+
+<!-- 帖子列表 -->
+<main id="postList">
+  <div id="loadingTip" class="tip">加载中...</div>
+</main>
+
+<!-- 底部发帖按钮 -->
+<div class="fab" id="fabNew">
+  <span>+ 发帖</span>
+</div>
+
+<!-- 发帖弹窗 -->
+<div id="postModal" class="modal">
+  <div class="modal-content post-box">
+    <div class="modal-header">
+      <span class="modal-title">发新帖</span>
+      <span class="modal-close" data-modal="postModal">&times;</span>
+    </div>
+    <textarea id="postContent" placeholder="分享你的校园生活..." maxlength="500"></textarea>
+    <div class="char-count"><span id="charCount">0</span>/500</div>
+    <div class="anonymous-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" id="anonCheck" />
+        <span>匿名发布</span>
+      </label>
+    </div>
+    <button class="btn btn-primary btn-block" id="submitPost">发布</button>
+  </div>
+</div>
+
+<!-- 评论弹窗 -->
+<div id="commentModal" class="modal">
+  <div class="modal-content comment-box">
+    <div class="modal-header">
+      <span class="modal-title">评论</span>
+      <span class="modal-close" data-modal="commentModal">&times;</span>
+    </div>
+    <div id="commentList"></div>
+    <div class="comment-input-row">
+      <input type="text" id="commentInput" placeholder="说点什么..." maxlength="200" />
+      <button class="btn btn-small btn-primary" id="sendComment">发送</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

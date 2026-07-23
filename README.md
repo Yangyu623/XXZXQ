@@ -1,90 +1,129 @@
-# 校园墙 - 微信小程序
+# 🏫 校园墙 - H5 网页版
 
-高中校园匿名/实名交流平台，支持微信登录、发帖、点赞、评论。
+给高中同学用的校园匿名交流平台，浏览器打开即用，无需审核。
 
 ## 功能
 
-- 🔐 **微信一键登录** — 获取用户头像和昵称
-- 📝 **发帖** — 支持文字 + 多图，可选匿名发布
-- 👍 **点赞** — 帖子点赞/取消点赞
-- 💬 **评论** — 所有人可见的评论区
-- 📋 **帖子广场** — 按时间倒序展示，下拉刷新，上拉加载更多
-- 👤 **个人中心** — 查看/删除自己的帖子
+- 🎭 昵称登录（无需注册，输入昵称即用）
+- 📝 发帖（支持匿名）
+- ❤️ 点赞
+- 💬 评论（所有人可见）
+- 📱 移动端优先，仿原生 App 体验
+- ⚡ 3 分钟部署到线上
 
 ## 技术栈
 
-- 微信小程序原生框架
-- 微信云开发 (CloudBase)
-  - 云数据库
-  - 云存储
-  - 云函数
+- 纯 HTML + CSS + JS（零框架依赖）
+- [Supabase](https://supabase.com) 后端（免费 PostgreSQL 数据库 + REST API）
+- 可部署到 GitHub Pages / Vercel / 任意静态托管
 
-## 快速开始
+## 快速部署（3 步）
 
-### 1. 准备工作
+### 第 1 步：创建 Supabase 项目
 
-1. 注册[微信小程序](https://mp.weixin.qq.com/)，获取 AppID
-2. 在微信开发者工具中开通**云开发**
-3. 创建云开发环境，记录**环境 ID**
+1. 打开 [supabase.com](https://supabase.com)，用 GitHub 账号注册登录
+2. 点击 **New project**，填写项目名（如 `campus-wall`），设置数据库密码
+3. 等待项目初始化完成（约 1 分钟）
 
-### 2. 配置项目
+### 第 2 步：创建数据库表
 
-1. 修改 `project.config.json` 中的 `appid` 为你的小程序 AppID
-2. 修改 `miniprogram/app.js` 中的 `env: ''你的云开发环境ID''` 为你的环境 ID
+进入 Supabase 项目的 **SQL Editor**，粘贴执行以下 SQL：
 
-### 3. 部署云函数
+```sql
+-- 帖子表
+CREATE TABLE posts (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  nickname TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_anonymous BOOLEAN DEFAULT FALSE,
+  like_count INT DEFAULT 0,
+  comment_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-在微信开发者工具中，右键 `cloudfunctions` 目录下的每个云函数文件夹：
-- `toggleLike`
-- `addComment`
+-- 评论表
+CREATE TABLE comments (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  post_id BIGINT REFERENCES posts(id) ON DELETE CASCADE,
+  nickname TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-选择 **上传并部署：云端安装依赖**
+-- 点赞表
+CREATE TABLE likes (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  post_id BIGINT REFERENCES posts(id) ON DELETE CASCADE,
+  user_nickname TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(post_id, user_nickname)
+);
 
-### 4. 创建数据库集合
+-- 点赞 +1 函数
+CREATE FUNCTION increment_like(post_id BIGINT) RETURNS VOID AS $$
+  UPDATE posts SET like_count = like_count + 1 WHERE id = post_id;
+$$ LANGUAGE SQL;
 
-在云开发控制台的数据库中创建以下集合：
+-- 点赞 -1 函数
+CREATE FUNCTION decrement_like(post_id BIGINT) RETURNS VOID AS $$
+  UPDATE posts SET like_count = like_count - 1 WHERE id = post_id;
+$$ LANGUAGE SQL;
 
-| 集合名 | 权限 |
+-- 评论 +1 函数
+CREATE FUNCTION increment_comment(post_id BIGINT) RETURNS VOID AS $$
+  UPDATE posts SET comment_count = comment_count + 1 WHERE id = post_id;
+$$ LANGUAGE SQL;
+
+-- 允许公开访问
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE likes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "允许所有人读帖子" ON posts FOR SELECT USING (true);
+CREATE POLICY "允许所有人发帖" ON posts FOR INSERT WITH CHECK (true);
+CREATE POLICY "允许发帖人删帖" ON posts FOR DELETE USING (nickname = current_setting('request.jwt.claims', true)::json->>'nickname');
+
+CREATE POLICY "允许所有人读评论" ON comments FOR SELECT USING (true);
+CREATE POLICY "允许所有人发评论" ON comments FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "允许所有人读点赞" ON likes FOR SELECT USING (true);
+CREATE POLICY "允许所有人点赞" ON likes FOR INSERT WITH CHECK (true);
+CREATE POLICY "允许取消点赞" ON likes FOR DELETE USING (user_nickname = current_setting('request.jwt.claims', true)::json->>'nickname');
+```
+
+### 第 3 步：配置前端
+
+1. 在 Supabase 项目设置 → **API** 中找到：
+   - `Project URL` → 替换 `js/config.js` 中的 `SUPABASE_URL`
+   - `anon public key` → 替换 `js/config.js` 中的 `SUPABASE_ANON_KEY`
+
+2. 把整个文件夹部署到任意静态托管：
+
+| 平台 | 操作 |
 |---|---|
-| `posts` | 所有用户可读，仅创建者可写 |
-| `comments` | 所有用户可读，仅创建者可写 |
-| `likes` | 所有用户可读，仅创建者可写 |
-| `users` | 所有用户可读，仅创建者可写 |
+| **GitHub Pages** | 上传到仓库，Settings → Pages → 选择分支即可 |
+| **Vercel** | `vercel` 一键部署 |
+| **Netlify** | 拖拽文件夹到 [app.netlify.com](https://app.netlify.com) |
 
-### 5. 准备图标资源
+## 本地运行
 
-在 `miniprogram/images/` 目录下放置以下图标：
+```bash
+# 任意 HTTP 服务器即可
+npx serve .
+# 或
+python -m http.server 8000
+```
 
-- `default-avatar.png` — 默认头像
-- `tab-square.png` / `tab-square-active.png` — 广场 Tab 图标
-- `tab-post.png` / `tab-post-active.png` — 发帖 Tab 图标
-- `tab-mine.png` / `tab-mine-active.png` — 我的 Tab 图标
-- `icon-like.png` / `icon-like-active.png` — 点赞图标
-- `icon-comment.png` — 评论图标
-- `icon-image.png` — 图片图标
-- `icon-anon.png` / `icon-anon-active.png` — 匿名图标
-
-### 6. 运行
-
-在微信开发者工具中打开项目，编译预览即可。
+浏览器打开 `http://localhost:8000` 即可。
 
 ## 项目结构
 
 ```
-├── miniprogram/
-│   ├── app.js              # 小程序入口
-│   ├── app.json            # 全局配置
-│   ├── app.wxss            # 全局样式
-│   ├── pages/
-│   │   ├── square/         # 广场（帖子列表）
-│   │   ├── post/           # 发帖
-│   │   ├── detail/         # 帖子详情 + 评论
-│   │   └── mine/           # 我的
-│   ├── utils/
-│   │   └── util.js         # 工具函数
-│   └── images/             # 图标资源
-├── cloudfunctions/
-│   ├── toggleLike/         # 点赞云函数
-│   └── addComment/         # 评论云函数
-└── project.config.json     # 项目配置
+├── index.html      # 主页面
+├── css/
+│   └── style.css   # 样式
+├── js/
+│   ├── config.js   # Supabase 配置
+│   └── app.js      # 核心逻辑
+└── README.md
 ```
