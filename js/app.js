@@ -152,15 +152,6 @@ switchLink.addEventListener('click', (e) => {
   }
 });
 
-
-// 刷新按钮
-document.getElementById('headerRefresh').addEventListener('click', () => {
-  const activePanel = document.querySelector('.panel.active');
-  if (!activePanel) return;
-  if (activePanel.id === 'panelSquare') loadPosts();
-  else if (activePanel.id === 'panelMine') loadMinePage();
-  showToast('已刷新');
-});
 headerUser.addEventListener('click', () => {
   if (!currentUser) return;
   if (confirm('确定要退出登录吗？')) {

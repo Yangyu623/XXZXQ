@@ -18,8 +18,9 @@ header {
   padding: 12px 20px; box-shadow: 0 2px 12px rgba(74,144,217,0.25);
 }
 .header-title { font-size: 18px; font-weight: 600; }
-.header-refresh { font-size: 16px; cursor: pointer; opacity: 0.85; padding: 4px 8px; margin-left: auto; }
 .header-user { font-size: 13px; opacity: 0.9; cursor: pointer; }
+
+/* 面板切换 */
 .panel { display: none; }
 .panel.active { display: block; }
 
