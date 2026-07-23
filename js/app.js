@@ -109,7 +109,7 @@ passwordInput.addEventListener("input", () => {
     { ok: pwd.length >= 8, text: "至少8位" },
     { ok: /[A-Z]/.test(pwd), text: "至少一个大写字母" },
     { ok: /[0-9]/.test(pwd), text: "至少一个数字" },
-    { ok: pwd && !/[^a-zA-Z0-9_]/.test(pwd), text: '特殊符号仅限下划线 "_"' }
+    { ok: pwd && /^[a-zA-Z0-9]+$/.test(pwd), text: '不允许特殊符号' }
   ];
   pwdRules.innerHTML = rules.map(r => "<span class=\"rule " + (r.ok ? "rule-ok" : "rule-fail") + "\">" + (r.ok ? "✅" : "❌") + " " + r.text + "</span>").join("");
 });
