@@ -94,7 +94,13 @@ switchLink.addEventListener("click", (e) => { e.preventDefault();
   pwdRules.style.display = isRegisterMode ? "block" : "none";
 });
 
-function validatePassword(pwd) {
+
+function validateNickname(nick) {
+  if (!nick) return '请输入昵称';
+  if (nick.length > 8) return '昵称不超过8个字符';
+  if (!/^[\u4e00-\u9fa5\d]+$/.test(nick)) return '昵称只允许中文汉字和数字';
+  return null;
+}function validatePassword(pwd) {
   if (pwd.length < 8) return '密码至少8位';
   if (!/[A-Z]/.test(pwd)) return '需要至少一个大写字母';
   if (!/[0-9]/.test(pwd)) return '需要至少一个数字';
@@ -141,8 +147,8 @@ function doLoginSuccess(nickname, isAdmin) {
 loginBtn.addEventListener('click', async () => {
   const name = nicknameInput.value.trim();
   const pwd = passwordInput.value;
-  if (!name) { showToast('请输入昵称'); return; }
-  if (name.length > 12) { showToast('昵称最多12个字'); return; }
+  const nickErr = validateNickname(name);
+  if (nickErr) { showToast(nickErr); return; }
   if (!pwd) { showToast('请输入密码'); return; }
   loginBtn.disabled = true;
   loginBtn.textContent = isRegisterMode ? '注册中...' : '登录中...';
@@ -432,7 +438,8 @@ $('#btnSaveProfile').addEventListener('click', async () => {
   const newNick = $('#editNickname').value.trim();
   const oldPwd = $('#editOldPwd').value;
   const newPwd = $('#editNewPwd').value;
-  if (!newNick) { showToast('请输入昵称'); return; }
+  const nickErr2 = validateNickname(newNick);
+  if (nickErr2) { showToast(nickErr2); return; }
   if (!oldPwd) { showToast('请输入原密码'); return; }
 
   const oldHash = await sha256(oldPwd);
