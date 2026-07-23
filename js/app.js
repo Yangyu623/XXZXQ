@@ -1,34 +1,4 @@
-window.toggleLoginMode = function(){
-var m=document.getElementById("confirmGroup");var b=document.getElementById("loginBtn");var s=document.getElementById("loginSub");var t=document.getElementById("switchText");var l=document.getElementById("switchLink");var p=document.getElementById("pwdRules");var reg=l.innerText==="去登录";l.innerText=reg?"去注册":"去登录";t.innerText=reg?"还没有账号？":"已有账号？";m.style.display=reg?"none":"block";b.textContent=reg?"登 录":"注 册";s.textContent=reg?"欢迎回来，请输入密码":"注册账号，加入你的校园";if(p)p.style.display=reg?"none":"block";};
 // js/app.js — 校园墙 v2
-
-async function disableUser(nickname) {
-  if (!confirm("确定要禁用用户 " + nickname + " 吗？\n该用户的所有帖子、评论、点赞将被永久删除。")) return;
-  try {
-    await db.deleteAll("posts", "nickname", nickname);
-    await db.deleteAll("comments", "nickname", nickname);
-    await db.deleteAll("likes", "user_nickname", nickname);
-    await db.from("users").update({ status: "disabled" }).eq("nickname", nickname);
-    showToast(nickname + " 已被禁用");
-    loadAdminUsers();
-  } catch (err) { showToast("操作失败"); console.error(err); }
-}
-
-
-// ========== 删除评论 ==========
-async function deleteComment(commentId) {
-  if (!confirm("确定要删除这条评论吗？")) return;
-  try {
-    await db.deleteAll("comments", "id", commentId);
-    showToast("评论已删除");
-    loadComments(currentPostId);
-  } catch (err) { showToast("删除失败"); console.error(err); }
-}
-
-checkLogin();
-  commentListEl.querySelectorAll('.comment-del-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deleteComment(el.dataset.delCid); }));
-// js/app.js — 校园墙 v2
-
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
@@ -101,34 +71,22 @@ $$('#bottomNav .nav-item').forEach(el => {
 
 
 // 密码实时规则检查
-setTimeout(function(){
-  var pr = document.getElementById("pwdRules");
-  var pi = document.getElementById("passwordInput");
-  if(!pr||!pi) return;
-  var spans = pr.querySelectorAll(".rule");
-  pi.addEventListener("input", function(){
-    var pwd = pi.value;
-    var rules = [
-      pwd.length >= 8,
-      /[A-Z]/.test(pwd),
-      /[0-9]/.test(pwd),
-      !pwd || /^[a-zA-Z0-9]+$/.test(pwd)
-    ];
-    for(var i=0;i<spans.length;i++){
-      if(rules[i]){
-        spans[i].className = "rule rule-ok";
-        spans[i].innerHTML = spans[i].innerHTML.replace("❌","✅");
-      } else {
-        spans[i].className = "rule rule-fail";
-        spans[i].innerHTML = spans[i].innerHTML.replace("✅","❌");
-      }
-    }
-  });
-}, 200);
+const pwdRules = $("#pwdRules");
+passwordInput.addEventListener("input", () => {
+  if (!isRegisterMode) { pwdRules.style.display = "none"; return; }
+  pwdRules.style.display = "block";
+  const pwd = passwordInput.value;
+  const rules = [
+    { ok: pwd.length >= 8, text: "至少8位" },
+    { ok: /[A-Z]/.test(pwd), text: "至少一个大写字母" },
+    { ok: /[a-z]/.test(pwd), text: "至少一个小写字母" },
+    { ok: /[0-9]/.test(pwd), text: "至少一个数字" },
+    { ok: pwd && !/[^a-zA-Z0-9_]/.test(pwd), text: '特殊符号仅限下划线 "_"' }
+  ];
+  pwdRules.innerHTML = rules.map(r => "<span class=\"rule " + (r.ok ? "rule-ok" : "rule-fail") + "\">" + (r.ok ? "✅" : "❌") + " " + r.text + "</span>").join("");
+});
 
-passwordInput.dispatchEvent(new Event('input'));
-
-window.toggleLoginMode = function() {
+switchLink.addEventListener("click", (e) => { e.preventDefault();
   isRegisterMode = !isRegisterMode;
   confirmGroup.style.display = isRegisterMode ? 'block' : 'none';
   loginBtn.textContent = isRegisterMode ? '注 册' : '登 录';
@@ -136,21 +94,12 @@ window.toggleLoginMode = function() {
   switchText.textContent = isRegisterMode ? '已有账号？' : '还没有账号？';
   switchLink.textContent = isRegisterMode ? '去登录' : '去注册';
   pwdRules.style.display = isRegisterMode ? "block" : "none";
-};
+});
 
-// 初始渲染
-if (typeof pwdRules !== "undefined" && pwdRules) { pwdRules.style.display = "block"; passwordInput.dispatchEvent(new Event("input")); }
-
-
-
-function validateNickname(nick) {
-  if (!nick) return '请输入昵称';
-  if (nick.length > 8) return '昵称不超过8个字符';
-  if (!/^[\u4e00-\u9fa5\d]+$/.test(nick)) return '昵称只允许中文汉字和数字';
-  return null;
-}function validatePassword(pwd) {
+function validatePassword(pwd) {
   if (pwd.length < 8) return '密码至少8位';
   if (!/[A-Z]/.test(pwd)) return '需要至少一个大写字母';
+  if (!/[a-z]/.test(pwd)) return '需要至少一个小写字母';
   if (!/[0-9]/.test(pwd)) return '需要至少一个数字';
   if (/[^a-zA-Z0-9_]/.test(pwd)) return '特殊符号只能使用下划线 "_"';
   return null;
@@ -178,7 +127,6 @@ async function doLogin(nickname, password) {
     if (data[0].password_hash !== hash) { showToast('密码错误'); return; }
     if (data[0].status === 'pending') { showToast('账号待审核中，请等待管理员通过'); return; }
     if (data[0].status === 'rejected') { showToast('账号已被拒绝'); return; }
-    if (data[0].status === 'disabled') { showToast('账号已被禁用'); return; }
     doLoginSuccess(nickname, data[0].is_admin);
   } catch (err) { showToast('登录失败'); }
 }
@@ -196,8 +144,8 @@ function doLoginSuccess(nickname, isAdmin) {
 loginBtn.addEventListener('click', async () => {
   const name = nicknameInput.value.trim();
   const pwd = passwordInput.value;
-  const nickErr = validateNickname(name);
-  if (nickErr) { showToast(nickErr); return; }
+  if (!name) { showToast('请输入昵称'); return; }
+  if (name.length > 12) { showToast('昵称最多12个字'); return; }
   if (!pwd) { showToast('请输入密码'); return; }
   loginBtn.disabled = true;
   loginBtn.textContent = isRegisterMode ? '注册中...' : '登录中...';
@@ -244,7 +192,6 @@ function renderPostCard(p, i, likedSet) {
     '<span class="post-time">' + formatTime(p.created_at) + '</span></div>' +
     '<div class="post-body">' + escapeHtml(p.content) + '</div>' + imgHtml +
     '<div class="post-actions">' +
-    ((p.nickname === currentUser || window.isAdmin) ? '<span class="act delete-post-btn" data-del-id="' + p.id + '">🗑️</span>' : '') +
     '<div class="act ' + (likedSet.has(p.id) ? 'liked' : '') + '" data-action="like" data-id="' + p.id + '">' +
     '<span class="act-icon">' + (likedSet.has(p.id) ? '❤️' : '🤍') + '</span>' +
     '<span class="like-count">' + (p.like_count || 0) + '</span></div>' +
@@ -255,8 +202,6 @@ function renderPostCard(p, i, likedSet) {
 function bindPostEvents() {
   postList.querySelectorAll('[data-action="like"]').forEach(el => el.addEventListener('click', () => toggleLike(el)));
   postList.querySelectorAll('[data-action="comment"]').forEach(el => el.addEventListener('click', () => openComments(el.dataset.id)));
-  postList.querySelectorAll('.delete-post-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deletePost(el.dataset.delId); }));
-  postList.querySelectorAll('.delete-post-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deletePost(el.dataset.delId); }));
 }
 
 // ========== 点赞 ==========
@@ -273,38 +218,6 @@ async function toggleLike(el) {
     if (isLiked) { el.classList.add('liked'); el.querySelector('.act-icon').textContent = '❤️'; countEl.textContent = parseInt(countEl.textContent) + 1; }
     else { el.classList.remove('liked'); el.querySelector('.act-icon').textContent = '🤍'; countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1); }
   }
-}
-
-// ========== 删除帖子 ==========
-async function deletePost(postId) {
-  if (!confirm('确定要删除这条帖子吗？')) return;
-  try {
-    // 删除关联评论
-    const { data: comments } = await db.from('comments').select('id').eq('post_id', postId).get();
-    for (const c of (comments || [])) {
-      await db.from('comments').delete().eq('id', c.id).eq('id', c.id).exec().catch(() => {});
-    }
-    // 直接用 REST 批量删除
-    await db.deleteAll('comments', 'post_id', postId);
-    await db.deleteAll('likes', 'post_id', postId);
-    await db.deleteAll('posts', 'id', postId);
-    showToast('已删除');
-    loadPosts();
-  } catch (err) { showToast('删除失败'); console.error(err); }
-}
-
-
-
-// ========== 删除帖子 ==========
-async function deletePost(postId) {
-  if (!confirm("确定要删除这条帖子吗？")) return;
-  try {
-    await db.deleteAll("comments", "post_id", postId);
-    await db.deleteAll("likes", "post_id", postId);
-    await db.deleteAll("posts", "id", postId);
-    showToast("已删除");
-    loadPosts();
-  } catch (err) { showToast("删除失败"); console.error(err); }
 }
 
 // ========== 图片上传 ==========
@@ -407,12 +320,12 @@ function renderCommentItem(c, isChild) {
     '<div class="comment-avatar">' + getAvatarEmoji(c.nickname) + '</div>' +
     '<div class="comment-body"><div class="comment-nickname">' + escapeHtml(c.nickname) + '</div>' +
     '<div class="comment-text">' + (c.reply_to_nickname ? '<span style="color:#4A90D9">@' + escapeHtml(c.reply_to_nickname) + '</span> ' : '') + escapeHtml(c.content) + '</div>' +
-    '<div class="comment-time">' + formatTime(c.created_at) + (window.isAdmin ? '<span class="comment-del-btn" data-del-cid="' + c.id + '">🗑️</span>' : '') + '<span class="comment-reply-btn" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span></div></div></div>';
+    '<div class="comment-time">' + formatTime(c.created_at) + '<span class="comment-reply-btn" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span></div></div></div>';
 }
 
 function bindCommentEvents() {
   commentListEl.querySelectorAll('.comment-reply-btn').forEach(el => {
-  commentListEl.querySelectorAll('.comment-reply-btn').forEach(el => {
+    el.addEventListener('click', () => {
       replyTo = { id: el.dataset.replyId, nickname: el.dataset.replyNick };
       replyHint.innerHTML = '回复 @' + escapeHtml(replyTo.nickname) + '<span class="cancel-reply">×</span></span>';
       replyHint.style.display = 'flex';
@@ -522,8 +435,7 @@ $('#btnSaveProfile').addEventListener('click', async () => {
   const newNick = $('#editNickname').value.trim();
   const oldPwd = $('#editOldPwd').value;
   const newPwd = $('#editNewPwd').value;
-  const nickErr2 = validateNickname(newNick);
-  if (nickErr2) { showToast(nickErr2); return; }
+  if (!newNick) { showToast('请输入昵称'); return; }
   if (!oldPwd) { showToast('请输入原密码'); return; }
 
   const oldHash = await sha256(oldPwd);
@@ -623,12 +535,12 @@ async function loadAdminUsers() {
         '<div class="admin-actions">' +
         '<button class="btn-approve" data-nick="' + escapeHtml(u.nickname) + '">通过</button>' +
         '<button class="btn-reject" data-nick="' + escapeHtml(u.nickname) + '">拒绝</button></div>' :
-        (u.is_admin ? '<span class="badge-status badge-approved">🛡️ 管理员</span>' : '<button class="btn-reject" data-dnick="' + escapeHtml(u.nickname) + '">禁用</button>')
+        '<span class="badge-status ' + (u.status === 'approved' ? 'badge-approved' : 'badge-rejected') + '">' + (u.status === 'approved' ? '已通过' : '已拒绝') + '</span>'
       ) +
     '</div>').join('');
 
     list.querySelectorAll('.btn-approve').forEach(b => b.addEventListener('click', () => approveUser(b.dataset.nick)));
-    list.querySelectorAll('.btn-reject').forEach(b => { if (b.dataset.nick) b.addEventListener('click', () => rejectUser(b.dataset.nick)); if (b.dataset.dnick) b.addEventListener('click', () => disableUser(b.dataset.dnick)); });
+    list.querySelectorAll('.btn-reject').forEach(b => b.addEventListener('click', () => rejectUser(b.dataset.nick)));
   } catch (err) { list.innerHTML = '<div class="tip">加载失败</div>'; }
 }
 
@@ -647,29 +559,6 @@ async function rejectUser(nickname) {
 // adminModal 关闭
 $('#adminModal').addEventListener('click', e => { if (e.target === $('#adminModal')) $('#adminModal').classList.remove('active'); });
 
-
-// ========== 删除评论 ==========
-async function deleteComment(commentId) {
-  if (!confirm("确定要删除这条评论吗？")) return;
-  try {
-    await db.deleteAll("comments", "id", commentId);
-    showToast("评论已删除");
-    loadComments(currentPostId);
-  } catch (err) { showToast("删除失败"); console.error(err); }
-}
-
-// ========== 管理员禁用用户 ==========
-async function disableUser(nickname) {
-  if (!confirm("确定要禁用用户 " + nickname + " 吗？\n该用户的所有帖子、评论、点赞将被永久删除。")) return;
-  try {
-    await db.deleteAll("posts", "nickname", nickname);
-    await db.deleteAll("comments", "nickname", nickname);
-    await db.deleteAll("likes", "user_nickname", nickname);
-    await db.from("users").update({ status: "disabled" }).eq("nickname", nickname);
-    showToast(nickname + " 已被禁用");
-    loadAdminUsers();
-  } catch (err) { showToast("操作失败"); console.error(err); }
-}
 // ========== 启动 ==========
 function checkLogin() {
   const saved = localStorage.getItem('campus_wall_nickname');
