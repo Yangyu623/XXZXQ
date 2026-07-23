@@ -51,6 +51,9 @@ function getAvatarEmoji(name) { const e = ['😊','🌟','🎈','🌸','🍀','�
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 async function sha256(t) { const d = new TextEncoder().encode(t); const h = await crypto.subtle.digest('SHA-256', d); return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join(''); }
 
+function generateSalt() { return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, "0")).join(""); }
+async function sha256s(salt, password) { return await sha256(salt + password); }
+
 // ========== 底部导航 ==========
 $$('#bottomNav .nav-item').forEach(el => {
   el.addEventListener('click', () => {
@@ -83,9 +86,10 @@ async function doRegister(nickname, password, confirm) {
   if (password !== confirm) { showToast('两次密码不一致'); return; }
   const err = validatePassword(password);
   if (err) { showToast(err); return; }
-  const hash = await sha256(password);
+  const salt = generateSalt();
+  const hash = await sha256s(salt, password);
   try {
-    const { error } = await db.from('users').insert({ nickname, password_hash: hash });
+    const { error } = await db.from('users').insert({ nickname, password_hash: salt + ':' + hash });
     if (error) throw error;
     showToast('注册成功，等待管理员审核');loginBtn.disabled = false;loginBtn.textContent = '注 册';
   } catch (err) {
@@ -94,11 +98,13 @@ async function doRegister(nickname, password, confirm) {
 }
 
 async function doLogin(nickname, password) {
-  const hash = await sha256(password);
   try {
     const { data } = await db.from('users').select('nickname,password_hash,status,is_admin').eq('nickname', nickname).get();
-    if (!data || data.length === 0) { showToast('账号不存在'); return; }
-    if (data[0].password_hash !== hash) { showToast('密码错误'); return; }
+    const parts = (data[0].password_hash || '').split(':');
+    const salt = parts[0] || '';
+    const storedHash = parts[1] || data[0].password_hash;
+    const inputHash = await sha256s(salt, password);
+    if (storedHash !== inputHash) { showToast('密码错误'); return; }
     if (data[0].status === 'pending') { showToast('账号待审核中，请等待管理员通过'); return; }
     if (data[0].status === 'rejected') { showToast('账号已被拒绝'); return; }
     if (data[0].status === 'disabled') { showToast('账号已被禁用'); return; }
@@ -494,13 +500,14 @@ $('#btnSaveProfile').addEventListener('click', async () => {
   const oldHash = await sha256(oldPwd);
   try {
     const { data } = await db.from('users').select().eq('nickname', currentUser).get();
-    if (!data || data.length === 0 || data[0].password_hash !== oldHash) { showToast('原密码错误'); return; }
+    if (!data || data.length === 0 || data[0].storedHash !== oldHash) { showToast('原密码错误'); return; }
 
     const updateData = { nickname: newNick };
     if (newPwd) {
       const pwdErr = validatePassword(newPwd);
       if (pwdErr) { showToast(pwdErr); return; }
-      updateData.password_hash = await sha256(newPwd);
+      const newSalt = generateSalt();
+      updateData.password_hash = newSalt + ':' + await sha256s(newSalt, newPwd);
     }
 
     await db.from('users').update(updateData).eq('nickname', currentUser);
