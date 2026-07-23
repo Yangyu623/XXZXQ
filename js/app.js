@@ -334,7 +334,7 @@ function renderCommentItem(c, isChild) {
     '<div class="comment-avatar">' + getAvatarEmoji(c.nickname) + '</div>' +
     '<div class="comment-body"><div class="comment-nickname">' + escapeHtml(c.nickname) + '</div>' +
     '<div class="comment-text">' + (c.reply_to_nickname ? '<span style="color:#4A90D9">@' + escapeHtml(c.reply_to_nickname) + '</span> ' : '') + escapeHtml(c.content) + '</div>' +
-    '<div class="comment-time">' + formatTime(c.created_at) + '<span class="comment-reply-btn" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span>' + (window.isAdmin ? '<span class="comment-del-btn" data-del-id="' + c.id + '"> 🗑️</span>' : '') + '</div></div></div>';
+    "<div class=\"comment-time\">" + formatTime(c.created_at) + "<span class=\"comment-reply-btn\" data-reply-id=\"" + c.id + "\" data-reply-nick=\"" + escapeHtml(c.nickname) + "\">回复</span>" + (window.isAdmin || c.nickname === currentUser ? "<span class=\"comment-del-btn\" data-del-id=\"" + c.id + "\"> 🗑️</span>" : "") + "</div></div></div>";
 }
 
 function bindCommentEvents() {
@@ -352,7 +352,7 @@ function bindCommentEvents() {
 }
 function cancelReply() { replyTo = null; replyHint.style.display = 'none'; commentInput.placeholder = '说点什么...'; }
 
-// 删除评论（管理员）
+// 删除评论（管理员或作者本人）
 async function deleteComment(commentId, postId) {
   if (!confirm('确定要删除这条评论吗？')) return;
   try {
