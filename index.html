@@ -40,34 +40,64 @@
   <span class="header-user" id="headerUser"></span>
 </header>
 
-<!-- 帖子列表 -->
-<main id="postList">
-  <div id="loadingTip" class="tip">加载中...</div>
+<!-- ===== 刷帖面板 ===== -->
+<main id="panelSquare" class="panel active">
+  <div id="postList"><div class="tip">加载中...</div></div>
 </main>
 
-<!-- 底部发帖按钮 -->
-<div class="fab" id="fabNew">
-  <span>+ 发帖</span>
-</div>
-
-<!-- 发帖弹窗 -->
-<div id="postModal" class="modal">
-  <div class="modal-content post-box">
-    <div class="modal-header">
-      <span class="modal-title">发新帖</span>
-      <span class="modal-close" data-modal="postModal">&times;</span>
-    </div>
+<!-- ===== 发帖面板 ===== -->
+<main id="panelPost" class="panel">
+  <div class="post-page">
     <textarea id="postContent" placeholder="分享你的校园生活..." maxlength="500"></textarea>
     <div class="char-count"><span id="charCount">0</span>/500</div>
-    <div class="anonymous-toggle">
-      <label class="toggle-label">
-        <input type="checkbox" id="anonCheck" />
-        <span>匿名发布</span>
-      </label>
+    <div class="image-grid" id="imageGrid"></div>
+    <div class="toolbar">
+      <button class="tool-btn" id="btnPickImage">📷 图片</button>
+      <input type="file" id="fileInput" accept="image/*" multiple style="display:none" />
+      <label class="tool-btn anon-label"><input type="checkbox" id="anonCheck" /> 匿名发布</label>
     </div>
     <button class="btn btn-primary btn-block" id="submitPost">发布</button>
   </div>
-</div>
+</main>
+
+<!-- ===== 我的面板 ===== -->
+<main id="panelMine" class="panel">
+  <div class="mine-page">
+    <div class="user-card">
+      <div class="user-avatar" id="myAvatar">😊</div>
+      <div class="user-name" id="myNickname"></div>
+      <button class="btn btn-outline btn-small" id="btnEditProfile">编辑资料</button>
+    </div>
+
+    <div class="mine-tabs">
+      <span class="mine-tab active" data-tab="myPosts">我的帖子</span>
+      <span class="mine-tab" data-tab="myLikes">我赞过的</span>
+      <span class="mine-tab" data-tab="myComments">我评论的</span>
+    </div>
+
+    <div class="mine-content" id="mineContent">
+      <div class="tip">加载中...</div>
+    </div>
+
+    <div id="adminSection" style="display:none"><button class="btn btn-block btn-admin" id="btnAdminPanel">🛡️ 用户管理</button></div><button class="btn btn-block btn-logout" id="btnLogout">退出登录</button>
+  </div>
+</main>
+
+<!-- ===== 底部导航栏 ===== -->
+<nav id="bottomNav">
+  <div class="nav-item active" data-panel="panelSquare">
+    <span class="nav-icon">📋</span>
+    <span class="nav-text">刷帖</span>
+  </div>
+  <div class="nav-item" data-panel="panelPost">
+    <span class="nav-icon">✏️</span>
+    <span class="nav-text">发帖</span>
+  </div>
+  <div class="nav-item" data-panel="panelMine">
+    <span class="nav-icon">👤</span>
+    <span class="nav-text">我的</span>
+  </div>
+</nav>
 
 <!-- 评论弹窗 -->
 <div id="commentModal" class="modal">
@@ -78,9 +108,48 @@
     </div>
     <div id="commentList"></div>
     <div class="comment-input-row">
+      <span class="reply-hint" id="replyHint" style="display:none"></span>
       <input type="text" id="commentInput" placeholder="说点什么..." maxlength="200" />
       <button class="btn btn-small btn-primary" id="sendComment">发送</button>
     </div>
+  </div>
+</div>
+
+<!-- 编辑资料弹窗 -->
+<div id="profileModal" class="modal">
+  <div class="modal-content profile-box">
+    <div class="modal-header">
+      <span class="modal-title">编辑资料</span>
+      <span class="modal-close" data-modal="profileModal">&times;</span>
+    </div>
+    <div class="form-group">
+      <label>新昵称</label>
+      <input type="text" id="editNickname" placeholder="输入新昵称..." maxlength="12" />
+    </div>
+    <div class="form-group">
+      <label>原密码</label>
+      <input type="password" id="editOldPwd" placeholder="输入原密码..." maxlength="20" />
+    </div>
+    <div class="form-group">
+      <label>新密码（不修改则留空）</label>
+      <input type="password" id="editNewPwd" placeholder="输入新密码..." maxlength="20" />
+    </div>
+    <button class="btn btn-primary btn-block" id="btnSaveProfile">保存</button>
+  </div>
+</div>
+
+<!-- 管理员审核弹窗 -->
+<div id="adminModal" class="modal">
+  <div class="modal-content admin-box">
+    <div class="modal-header">
+      <span class="modal-title">🛡️ 用户管理</span>
+      <span class="modal-close" data-modal="adminModal">&times;</span>
+    </div>
+    <div class="admin-tabs">
+      <span class="admin-tab active" id="tabPending">待审核</span>
+      <span class="admin-tab" id="tabApproved">已通过</span>
+    </div>
+    <div id="adminUserList" class="admin-list"></div>
   </div>
 </div>
 

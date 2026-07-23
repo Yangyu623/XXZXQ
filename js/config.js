@@ -1,10 +1,10 @@
-// js/config.js — Supabase REST API 封装（零依赖）
+// js/config.js — Supabase REST API 封装 + 图片上传
 
 const SUPABASE_URL = 'https://bavpuxqrifyiucpxoazp.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_5Ih00Go-bkwKmw7avKAHIA_aojZTRal';
 const REST_URL = SUPABASE_URL + '/rest/v1';
+const STORAGE_URL = SUPABASE_URL + '/storage/v1/object/post-images/';
 
-// 通用请求封装
 async function api(method, path, body) {
   const headers = {
     'apikey': SUPABASE_KEY,
@@ -14,7 +14,6 @@ async function api(method, path, body) {
   };
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
-
   const res = await fetch(REST_URL + path, opts);
   if (!res.ok) {
     const err = await res.text();
@@ -24,13 +23,27 @@ async function api(method, path, body) {
   return text ? JSON.parse(text) : null;
 }
 
-// 暴露简洁 API
+// 图片上传
+async function uploadImage(file) {
+  const fileName = Date.now() + '-' + Math.random().toString(36).slice(2) + '.jpg';
+  const formData = new FormData();
+  formData.append('file', file, fileName);
+  const res = await fetch(STORAGE_URL + fileName, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+    body: formData
+  });
+  if (!res.ok) throw new Error('上传失败');
+  const data = await res.json();
+  return SUPABASE_URL + '/storage/v1/object/public/post-images/' + fileName;
+}
+
 const db = {
   from: (table) => ({
     select: (columns) => ({
       order: (col, opts) => ({
         async get() {
-          const q = columns ? '?select=' + columns : '?select=*';
+          const q = '?select=' + (columns || '*');
           const ord = '&order=' + col + '.' + (opts?.ascending === false ? 'desc' : 'asc');
           return { data: await api('GET', '/' + table + q + ord), error: null };
         },
@@ -45,13 +58,26 @@ const db = {
         }
       }),
       eq: (col, val) => ({
+        order: (ocol) => ({
+          async get() {
+            const q = '?select=' + (columns || '*') + '&' + col + '=eq.' + encodeURIComponent(val);
+            const ord = '&order=' + ocol + '.asc';
+            return { data: await api('GET', '/' + table + q + ord), error: null };
+          }
+        }),
         async get() {
           const q = '?select=' + (columns || '*') + '&' + col + '=eq.' + encodeURIComponent(val);
           return { data: await api('GET', '/' + table + q), error: null };
         }
       }),
+      in: (col, vals) => ({
+        async get() {
+          const q = '?select=' + (columns || '*') + '&' + col + '=in.(' + vals.join(',') + ')';
+          return { data: await api('GET', '/' + table + q), error: null };
+        }
+      }),
       async get() {
-        const q = columns ? '?select=' + columns : '?select=*';
+        const q = '?select=' + (columns || '*');
         return { data: await api('GET', '/' + table + q), error: null };
       }
     }),
@@ -59,6 +85,17 @@ const db = {
       const result = await api('POST', '/' + table, data);
       return { data: result, error: null };
     },
+    update: (data) => ({
+      eq: async (col, val) => {
+        await api('PATCH', '/' + table + '?' + col + '=eq.' + encodeURIComponent(val), data);
+        return { error: null };
+      },
+      in: async (col, vals) => {
+        const q = '?' + col + '=in.(' + vals.join(',') + ')';
+        await api('PATCH', '/' + table + q, data);
+        return { error: null };
+      }
+    }),
     delete: () => ({
       eq: (col, val) => ({
         eq: (col2, val2) => ({
