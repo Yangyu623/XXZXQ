@@ -1,19 +1,48 @@
 ﻿// js/posts.js — 刷帖 / 点赞 / 评论
 
-async function loadPosts() {
+// ????
+const POSTS_PER_PAGE = 20;
+let postsCache = [];
+let postsPage = 0;
+let postsHasMore = true;
+
+async function loadPosts(reset = true) {
   const postList = $('#postList');
-  postList.innerHTML = '<div class="tip">加载中...</div>';
+  if (reset) {
+    postsPage = 0;
+    postsCache = [];
+    postsHasMore = true;
+    postList.innerHTML = '<div class="tip">???...</div>';
+  }
   try {
-    const { data } = await db.from('posts').select().order('created_at', { ascending: false }).get();
-    if (!data || data.length === 0) { postList.innerHTML = '<div class="tip">还没有帖子，快来发第一条吧~</div>'; return; }
+    const from = postsPage * POSTS_PER_PAGE;
+    const to = from + POSTS_PER_PAGE - 1;
+    const { data } = await db.from('posts').select().range(from, to).order('created_at', { ascending: false }).get();
+    if (!data || data.length === 0) {
+      postsHasMore = false;
+      if (postsCache.length === 0) postList.innerHTML = '<div class="tip">?????????????~</div>';
+      return;
+    }
+    postsCache = postsCache.concat(data);
+    postsHasMore = data.length === POSTS_PER_PAGE;
+    postsPage++;
+
     let likedSet = new Set();
     try {
       const { data: likes } = await db.from('likes').select().eq('user_nickname', currentUser).get();
       likedSet = new Set((likes || []).map(l => l.post_id));
     } catch (e) {}
-    postList.innerHTML = data.map((p, i) => renderPostCard(p, i, likedSet)).join('');
+
+    let html = postsCache.map((p, i) => renderPostCard(p, i, likedSet)).join('');
+    if (postsHasMore) {
+      html += '<div class="load-more"><button id="btnLoadMore" class="btn btn-outline btn-block">????</button></div>';
+    }
+    postList.innerHTML = html;
     bindPostEvents();
-  } catch (err) { postList.innerHTML = '<div class="tip">⚠️ 加载失败，请刷新重试</div>'; }
+
+    const btn = document.getElementById('btnLoadMore');
+    if (btn) btn.addEventListener('click', () => loadPosts(false));
+  } catch (err) { postList.innerHTML = '<div class="tip">?? ??????????</div>'; }
 }
 
 function renderPostCard(p, i, likedSet) {

@@ -1,5 +1,28 @@
 // js/post-form.js — 发帖
 
+
+// 图片压缩（最大宽1200px，质量0.8）
+async function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX_W = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX_W) { h = h * MAX_W / w; w = MAX_W; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => {
+        if (blob) resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+        else resolve(file);
+      }, 'image/jpeg', 0.8);
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 function renderImageGrid() {
   const imageGrid = $('#imageGrid');
   if (!selectedImages || selectedImages.length === 0) { imageGrid.innerHTML = ''; return; }
@@ -50,7 +73,8 @@ function bindPostFormEvents() {
       let imageUrls = [];
       if (selectedImages.length > 0) {
         for (const f of selectedImages) {
-          const url = await uploadImage(f);
+          const compressed = await compressImage(f);
+          const url = await uploadImage(compressed);
           imageUrls.push(url);
         }
       }

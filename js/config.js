@@ -82,7 +82,20 @@ const db = {
       async get() {
         const q = '?select=' + (columns || '*');
         return { data: await api('GET', '/' + table + q), error: null };
-      }
+      },
+      range: (from, to) => ({
+        order: (col, opts) => ({
+          async get() {
+            const q = '?select=' + (columns || '*') + '&order=' + col + '.' + (opts?.ascending === false ? 'desc' : 'asc');
+            const r = '&limit=' + (to - from + 1) + '&offset=' + from;
+            return { data: await api('GET', '/' + table + q + r), error: null };
+          }
+        }),
+        async get() {
+          const q = '?select=' + (columns || '*') + '&limit=' + (to - from + 1) + '&offset=' + from;
+          return { data: await api('GET', '/' + table + q), error: null };
+        }
+      })
     }),
     insert: async (data) => {
       const result = await api('POST', '/' + table, data);
