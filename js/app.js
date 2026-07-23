@@ -573,12 +573,14 @@ async function loadAdminUsers() {
   list.innerHTML = '<div class="tip">加载中...</div>';
   try {
     const { data } = await db.from('users').select().eq('status', adminTab).order('created_at', { ascending: false }).get();
-    if (!data || data.length === 0) {
-      list.innerHTML = '<div class="tip">' + (adminTab === 'pending' ? '没有待审核用户' : '没有已通过用户') + '</div>';
+    const keyword = (document.getElementById('adminSearchInput').value || '').trim().toLowerCase();
+    const filtered = keyword ? (data || []).filter(u => u.nickname.toLowerCase().includes(keyword)) : (data || []);
+    if (!filtered || filtered.length === 0) {
+      list.innerHTML = '<div class="tip">' + (keyword ? '没有匹配用户' : (adminTab === 'pending' ? '没有待审核用户' : '没有已通过用户')) + '</div>';
       return;
     }
 
-    list.innerHTML = data.map(u => '<div class="admin-user-item">' +
+    list.innerHTML = filtered.map(u => '<div class="admin-user-item">' +
       '<div class="admin-user-info">' +
       '<div class="admin-user-avatar">' + getAvatarEmoji(u.nickname) + '</div>' +
       '<div><div class="admin-user-name">' + escapeHtml(u.nickname) + (u.is_admin ? ' 🛡️' : '') + '</div>' +
