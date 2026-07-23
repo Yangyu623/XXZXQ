@@ -235,6 +235,12 @@ header {
 }
 .admin-tab.active { color: #4A90D9; border-bottom-color: #4A90D9; }
 .admin-list { max-height: 50vh; overflow-y: auto; }
+.admin-search { padding: 0 0 12px 0; }
+.admin-search input {
+  width: 100%; padding: 10px 14px; border: 1.5px solid #e0e0e0;
+  border-radius: 10px; font-size: 14px; outline: none;
+}
+.admin-search input:focus { border-color: #4A90D9; }
 .admin-user-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 0; border-bottom: 1px solid #f5f5f5;

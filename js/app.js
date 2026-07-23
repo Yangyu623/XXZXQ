@@ -544,10 +544,10 @@ function switchTab(panelId) {
 
 
 // ========== 管理员面板 ==========
-let adminTab = 'pending'; // pending / approved
+let adminTab = 'pending'; document.getElementById('adminSearchInput').value = ''; // pending / approved
 
 $('#btnAdminPanel').addEventListener('click', () => {
-  adminTab = 'pending';
+  adminTab = 'pending'; document.getElementById('adminSearchInput').value = '';
   $('#tabPending').classList.add('active');
   $('#tabApproved').classList.remove('active');
   $('#adminModal').classList.add('active');
@@ -555,14 +555,14 @@ $('#btnAdminPanel').addEventListener('click', () => {
 });
 
 $('#tabPending').addEventListener('click', () => {
-  adminTab = 'pending';
+  adminTab = 'pending'; document.getElementById('adminSearchInput').value = '';
   $('#tabPending').classList.add('active');
   $('#tabApproved').classList.remove('active');
   loadAdminUsers();
 });
 
 $('#tabApproved').addEventListener('click', () => {
-  adminTab = 'approved';
+  adminTab = 'approved'; document.getElementById('adminSearchInput').value = '';
   $('#tabApproved').classList.add('active');
   $('#tabPending').classList.remove('active');
   loadAdminUsers();
@@ -634,6 +634,9 @@ async function disableUser(nickname) {
     loadPosts();
   } catch (err) { showToast('操作失败'); }
 }
+// 搜索过滤
+document.getElementById('adminSearchInput').addEventListener('input', () => { loadAdminUsers(); });
+
 // adminModal 关闭
 $('#adminModal').addEventListener('click', e => { if (e.target === $('#adminModal')) $('#adminModal').classList.remove('active'); });
 
