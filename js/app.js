@@ -101,21 +101,31 @@ $$('#bottomNav .nav-item').forEach(el => {
 
 
 // 密码实时规则检查
-const pwdRules = $("#pwdRules");
-passwordInput.addEventListener("input", () => {
-  
-  const pwd = passwordInput.value;
-  const rules = [
-    { ok: pwd.length >= 8, text: "至少8位" },
-    { ok: /[A-Z]/.test(pwd), text: "至少一个大写字母" },
-    { ok: /[0-9]/.test(pwd), text: "至少一个数字" },
-    { ok: !pwd || /^[a-zA-Z0-9]+$/.test(pwd), text: '不允许特殊符号' }
-  ];
-  pwdRules.innerHTML = rules.map(r => "<span class=\"rule " + (r.ok ? "rule-ok" : "rule-fail") + "\">" + (r.ok ? "✅" : "❌") + " " + r.text + "</span>").join("");
-});
+setTimeout(function(){
+  var pr = document.getElementById("pwdRules");
+  var pi = document.getElementById("passwordInput");
+  if(!pr||!pi) return;
+  var spans = pr.querySelectorAll(".rule");
+  pi.addEventListener("input", function(){
+    var pwd = pi.value;
+    var rules = [
+      pwd.length >= 8,
+      /[A-Z]/.test(pwd),
+      /[0-9]/.test(pwd),
+      !pwd || /^[a-zA-Z0-9]+$/.test(pwd)
+    ];
+    for(var i=0;i<spans.length;i++){
+      if(rules[i]){
+        spans[i].className = "rule rule-ok";
+        spans[i].innerHTML = spans[i].innerHTML.replace("❌","✅");
+      } else {
+        spans[i].className = "rule rule-fail";
+        spans[i].innerHTML = spans[i].innerHTML.replace("✅","❌");
+      }
+    }
+  });
+}, 200);
 
-
-// 初始渲染密码规则
 passwordInput.dispatchEvent(new Event('input'));
 
 window.toggleLoginMode = function() {
