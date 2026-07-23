@@ -97,10 +97,10 @@ switchLink.addEventListener("click", (e) => { e.preventDefault();
 });
 
 function validatePassword(pwd) {
-  if (pwd.length < 8) return '密码至少8位';
-  if (!/[A-Z]/.test(pwd)) return '需要至少一个大写字母';
+  if (pwd.length < 8) return '密码长度不小于8位';
+  if (!/[A-Z]/.test(pwd)) return '必须含有一个大写字母';
   if (!/[a-z]/.test(pwd)) return '需要至少一个小写字母';
-  if (!/[0-9]/.test(pwd)) return '需要至少一个数字';
+  if (!/[0-9]/.test(pwd)) return '必须含有一个数字';
   if (/[^a-zA-Z0-9_]/.test(pwd)) return '特殊符号只能使用下划线 "_"';
   return null;
 }
