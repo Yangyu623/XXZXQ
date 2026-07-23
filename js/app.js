@@ -279,12 +279,13 @@ submitPost.addEventListener('click', async () => {
       }
     }
 
-    const { error } = await db.from('posts').insert({
+    const postData = {
       nickname: currentUser, content,
       is_anonymous: anonCheck.checked,
-      images: imageUrls.length ? JSON.stringify(imageUrls) : null,
       like_count: 0, comment_count: 0
-    });
+    };
+    if (imageUrls.length) postData.images = JSON.stringify(imageUrls);
+    const { error } = await db.from('posts').insert(postData);
     if (error) { showToast('发布失败'); } else {
       showToast('发布成功！');
       postContent.value = ''; charCount.textContent = '0'; anonCheck.checked = false;
