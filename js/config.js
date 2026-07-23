@@ -87,8 +87,8 @@ const db = {
     },
     update: (data) => ({
       eq: async (col, val) => {
-        await api('PATCH', '/' + table + '?' + col + '=eq.' + encodeURIComponent(val), data);
-        return { error: null };
+        const result = await api('PATCH', '/' + table + '?' + col + '=eq.' + encodeURIComponent(val), data);
+        return { data: result, error: null };
       },
       in: async (col, vals) => {
         const q = '?' + col + '=in.(' + vals.join(',') + ')';
@@ -104,7 +104,19 @@ const db = {
             await api('DELETE', '/' + table + q);
             return { error: null };
           }
-        })
+        }),
+        async exec() {
+          const q = '?' + col + '=eq.' + encodeURIComponent(val);
+          await api('DELETE', '/' + table + q);
+          return { error: null };
+        }
+      }),
+      in: (col, vals) => ({
+        async exec() {
+          const q = '?' + col + '=in.(' + vals.map(encodeURIComponent).join(',') + ')';
+          await api('DELETE', '/' + table + q);
+          return { error: null };
+        }
       })
     })
   }),
