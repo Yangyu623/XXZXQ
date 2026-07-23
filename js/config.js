@@ -33,7 +33,7 @@ async function uploadImage(file) {
     headers: { 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
     body: formData
   });
-  if (!res.ok) throw new Error('上传失败');
+  if (!res.ok) { const errText = await res.text(); throw new Error('上传失败: ' + (errText || res.statusText)); }
   const data = await res.json();
   return SUPABASE_URL + '/storage/v1/object/public/post-images/' + fileName;
 }
