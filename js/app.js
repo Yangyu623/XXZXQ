@@ -69,6 +69,7 @@ $$('#bottomNav .nav-item').forEach(el => {
 
 // ========== 登录/注册 ==========
 
+
 // 密码实时规则检查
 const pwdRules = $("#pwdRules");
 passwordInput.addEventListener("input", () => {
