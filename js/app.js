@@ -70,31 +70,6 @@ $$('#bottomNav .nav-item').forEach(el => {
 // ========== 登录/注册 ==========
 
 
-// 密码实时规则检查
-const pwdRules = $("#pwdRules");
-passwordInput.addEventListener("input", () => {
-  if (!isRegisterMode) { pwdRules.style.display = "none"; return; }
-  pwdRules.style.display = "block";
-  const pwd = passwordInput.value;
-  const rules = [
-    { ok: pwd.length >= 8, text: "至少8位" },
-    { ok: /[A-Z]/.test(pwd), text: "至少一个大写字母" },
-    { ok: /[a-z]/.test(pwd), text: "至少一个小写字母" },
-    { ok: /[0-9]/.test(pwd), text: "至少一个数字" },
-    { ok: pwd && !/[^a-zA-Z0-9_]/.test(pwd), text: '特殊符号仅限下划线 "_"' }
-  ];
-  pwdRules.innerHTML = rules.map(r => "<span class=\"rule " + (r.ok ? "rule-ok" : "rule-fail") + "\">" + (r.ok ? "✅" : "❌") + " " + r.text + "</span>").join("");
-});
-
-switchLink.addEventListener("click", (e) => { e.preventDefault();
-  isRegisterMode = !isRegisterMode;
-  confirmGroup.style.display = isRegisterMode ? 'block' : 'none';
-  loginBtn.textContent = isRegisterMode ? '注 册' : '登 录';
-  loginSub.textContent = isRegisterMode ? '注册账号，加入你的校园' : '欢迎回来，请输入密码';
-  switchText.textContent = isRegisterMode ? '已有账号？' : '还没有账号？';
-  switchLink.textContent = isRegisterMode ? '去登录' : '去注册';
-  pwdRules.style.display = isRegisterMode ? "block" : "none";
-});
 
 function validatePassword(pwd) {
   if (pwd.length < 8) return '密码长度不小于8位';
