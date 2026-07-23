@@ -1,4 +1,31 @@
 // js/app.js — 校园墙 v2
+
+async function disableUser(nickname) {
+  if (!confirm("确定要禁用用户 " + nickname + " 吗？\n该用户的所有帖子、评论、点赞将被永久删除。")) return;
+  try {
+    await db.deleteAll("posts", "nickname", nickname);
+    await db.deleteAll("comments", "nickname", nickname);
+    await db.deleteAll("likes", "user_nickname", nickname);
+    await db.from("users").update({ status: "disabled" }).eq("nickname", nickname);
+    showToast(nickname + " 已被禁用");
+    loadAdminUsers();
+  } catch (err) { showToast("操作失败"); console.error(err); }
+}
+
+
+// ========== 删除评论 ==========
+async function deleteComment(commentId) {
+  if (!confirm("确定要删除这条评论吗？")) return;
+  try {
+    await db.deleteAll("comments", "id", commentId);
+    showToast("评论已删除");
+    loadComments(currentPostId);
+  } catch (err) { showToast("删除失败"); console.error(err); }
+}
+
+checkLogin();
+  commentListEl.querySelectorAll('.comment-del-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deleteComment(el.dataset.delCid); }));
+// js/app.js — 校园墙 v2
   commentListEl.querySelectorAll('.comment-del-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deleteComment(el.dataset.delCid); }));
 
 const $ = (s) => document.querySelector(s);
@@ -209,6 +236,7 @@ function bindPostEvents() {
   postList.querySelectorAll('[data-action="like"]').forEach(el => el.addEventListener('click', () => toggleLike(el)));
   postList.querySelectorAll('[data-action="comment"]').forEach(el => el.addEventListener('click', () => openComments(el.dataset.id)));
   postList.querySelectorAll('.delete-post-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deletePost(el.dataset.delId); }));
+  postList.querySelectorAll('.delete-post-btn').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); deletePost(el.dataset.delId); }));
 }
 
 // ========== 点赞 ==========
@@ -245,6 +273,19 @@ async function deletePost(postId) {
   } catch (err) { showToast('删除失败'); console.error(err); }
 }
 
+
+
+// ========== 删除帖子 ==========
+async function deletePost(postId) {
+  if (!confirm("确定要删除这条帖子吗？")) return;
+  try {
+    await db.deleteAll("comments", "post_id", postId);
+    await db.deleteAll("likes", "post_id", postId);
+    await db.deleteAll("posts", "id", postId);
+    showToast("已删除");
+    loadPosts();
+  } catch (err) { showToast("删除失败"); console.error(err); }
+}
 
 // ========== 图片上传 ==========
 btnPickImage.addEventListener('click', () => fileInput.click());
@@ -346,7 +387,7 @@ function renderCommentItem(c, isChild) {
     '<div class="comment-avatar">' + getAvatarEmoji(c.nickname) + '</div>' +
     '<div class="comment-body"><div class="comment-nickname">' + escapeHtml(c.nickname) + '</div>' +
     '<div class="comment-text">' + (c.reply_to_nickname ? '<span style="color:#4A90D9">@' + escapeHtml(c.reply_to_nickname) + '</span> ' : '') + escapeHtml(c.content) + '</div>' +
-    '<div class="comment-time">' + formatTime(c.created_at) + '<span class="comment-reply-btn" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span></div></div></div>';
+    '<div class="comment-time">' + formatTime(c.created_at) + (window.isAdmin ? '<span class="comment-del-btn" data-del-cid="' + c.id + '">🗑️</span>' : '') + '<span class="comment-reply-btn" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span></div></div></div>';
 }
 
 function bindCommentEvents() {
