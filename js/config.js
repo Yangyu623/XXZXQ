@@ -108,6 +108,10 @@ const db = {
       })
     })
   }),
+  deleteAll: async (table, col, val) => {
+    await api('DELETE', '/' + table + '?' + col + '=eq.' + encodeURIComponent(val));
+    return { error: null };
+  },
   rpc: async (fn, params) => {
     const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
     await api('POST', '/rpc/' + fn + '?' + qs);
