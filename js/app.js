@@ -377,7 +377,7 @@ sendCommentBtn.addEventListener('click', async () => {
       commentInput.value = ''; cancelReply();
       loadComments(currentPostId); loadPosts();
     }
-  } catch (err) { showToast('评论失败'); }
+  } catch (err) { showToast('评论失败: ' + (err.message || '未知')); }
   finally { sendCommentBtn.disabled = false; }
 });
 

@@ -9,9 +9,9 @@ async function api(method, path, body) {
   const headers = {
     'apikey': SUPABASE_KEY,
     'Authorization': 'Bearer ' + SUPABASE_KEY,
-    'Content-Type': 'application/json',
     'Prefer': 'return=representation'
   };
+  if (body) { headers['Content-Type'] = 'application/json'; }
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(REST_URL + path, opts);
