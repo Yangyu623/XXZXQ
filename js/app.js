@@ -49,7 +49,8 @@ function showToast(msg) {
 function formatTime(d) { if (!d) return ''; const t = new Date(d), n = new Date(); const diff = n - t; if (diff < 60000) return '刚刚'; if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'; if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'; return (t.getMonth() + 1) + '月' + t.getDate() + '日 ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'); }
 function getAvatarEmoji(name) { const e = ['😊','🌟','🎈','🌸','🍀','🐣','🦊','🐱','🐶','🐼','🐨','🐯','🦁','🐸','🐵','🐮','🐷','🐭','🐹','🐰']; let h = 0; for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h); return e[Math.abs(h) % e.length]; }
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-async function sha256(t) { const d = new TextEncoder().encode(t); const h = await crypto.subtle.digest('SHA-256', d); return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join(''); }
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function openImageViewer(url) { document.getElementById('viewerImg').src = url; document.getElementById('imageViewer').classList.add('active'); }
 
 function generateSalt() { return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, "0")).join(""); }
 async function sha256s(salt, password) { return await sha256(salt + password); }
@@ -204,7 +205,7 @@ async function loadPosts() {
 
 function renderPostCard(p, i, likedSet) {
   const imgs = p.images ? (typeof p.images === 'string' ? JSON.parse(p.images) : p.images) : [];
-  const imgHtml = imgs.length ? '<div class="post-images">' + imgs.map(u => '<img src="' + escapeHtml(u) + '" />').join('') + '</div>' : '';
+  const imgHtml = imgs.length ? '<div class="post-images">' + imgs.map(u => '<img src="' + escapeHtml(u) + '" onclick="event.stopPropagation();openImageViewer(\'' + escapeHtml(u).replace(/'/g, "\\'") + '\')" />').join('') + '</div>' : '';
   return '<div class="post-card" style="animation-delay:' + (i * 0.03) + 's">' +
     '<div class="post-header"><div class="post-avatar">' + getAvatarEmoji(p.nickname) + '</div>' +
     '<span class="post-nickname">' + (p.is_anonymous ? '匿名用户' : escapeHtml(p.nickname)) + '</span>' +
