@@ -87,15 +87,13 @@ passwordInput.addEventListener("input", () => {
 });
 
 switchLink.addEventListener("click", () => {
-  pwdRules.style.display = isRegisterMode ? "block" : "none";
-});
-switchLink.addEventListener('click', () => {
   isRegisterMode = !isRegisterMode;
   confirmGroup.style.display = isRegisterMode ? 'block' : 'none';
   loginBtn.textContent = isRegisterMode ? '注 册' : '登 录';
   loginSub.textContent = isRegisterMode ? '注册账号，加入你的校园' : '欢迎回来，请输入密码';
   switchText.textContent = isRegisterMode ? '已有账号？' : '还没有账号？';
   switchLink.textContent = isRegisterMode ? '去登录' : '去注册';
+  pwdRules.style.display = isRegisterMode ? "block" : "none";
 });
 
 function validatePassword(pwd) {
