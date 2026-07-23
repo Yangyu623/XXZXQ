@@ -73,8 +73,7 @@ $$('#bottomNav .nav-item').forEach(el => {
 // 密码实时规则检查
 const pwdRules = $("#pwdRules");
 passwordInput.addEventListener("input", () => {
-  if (!isRegisterMode) { pwdRules.style.display = "none"; return; }
-  pwdRules.style.display = "block";
+  
   const pwd = passwordInput.value;
   const rules = [
     { ok: pwd.length >= 8, text: "至少8位" },

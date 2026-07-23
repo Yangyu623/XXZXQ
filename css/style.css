@@ -265,7 +265,7 @@ header {
   background: #f8f8f8; border-radius: 8px;
 }
 /* 密码规则提示 */
-.pwd-rules { display: none; margin-top: 8px; margin-bottom: 8px; }
+.pwd-rules { display: block; margin-top: 8px; margin-bottom: 8px; }
 .rule { display: block; font-size: 12px; padding: 2px 0; }
 .rule-ok { color: #4CAF50; }
 .rule-fail { color: #ccc; }
