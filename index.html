@@ -27,6 +27,10 @@
       <input type="password" id="confirmInput" placeholder="再次输入密码..." maxlength="20" />
     </div>
     <div id="pwdRules" class="pwd-rules"><span class="rule">❌ 长度不小于8位</span><span class="rule">❌ 必须含有一个大写字母</span><span class="rule">❌ 必须含有一个数字</span><span class="rule">✅ 只含有数字和字母</span></div>
+    <div class="form-group" id="captchaGroup">
+      <label>验证码：<span id="captchaQuestion">?</span></label>
+      <input type="text" id="captchaInput" placeholder="输入计算结果..." maxlength="3" inputmode="numeric" />
+    </div>
     <button class="btn btn-primary btn-block" id="loginBtn">注 册</button>
     <p class="switch-mode">
       <span id="switchText">已有账号？</span>

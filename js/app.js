@@ -122,9 +122,27 @@ loginBtn.addEventListener('click', async () => {
   if (!name) { showToast('请输入昵称'); return; }
   if (name.length > 12) { showToast('昵称最多12个字'); return; }
   if (!pwd) { showToast('请输入密码'); return; }
+
+  if (isRegisterMode) {
+    // 注册冷却检查
+    const cd = getRegCooldown();
+    if (cd > 0) { showToast('请等待 ' + Math.ceil(cd/1000) + ' 秒后再注册'); return; }
+    // 验证码检查
+    const userAnswer = parseInt(document.getElementById('captchaInput').value);
+    if (userAnswer !== captchaAnswer) {
+      showToast('验证码错误，请重新计算');
+      generateCaptcha();
+      document.getElementById('captchaInput').value = '';
+      return;
+    }
+  }
+
   loginBtn.disabled = true;
   loginBtn.textContent = isRegisterMode ? '注册中...' : '登录中...';
-  if (isRegisterMode) await doRegister(name, pwd, confirmInput.value);
+  if (isRegisterMode) {
+    localStorage.setItem('reg_last_attempt', Date.now().toString());
+    await doRegister(name, pwd, confirmInput.value);
+  }
   else await doLogin(name, pwd);
   loginBtn.disabled = false;
   loginBtn.textContent = isRegisterMode ? '注 册' : '登 录';
@@ -141,7 +159,10 @@ switchLink.addEventListener('click', (e) => {
     switchText.textContent = '已有账号？';
     switchLink.textContent = '去登录';
     confirmGroup.style.display = 'block';
+    confirmGroup.style.display = 'block';
     document.getElementById('pwdRules').style.display = 'block';
+    document.getElementById('captchaGroup').style.display = 'block';
+    generateCaptcha();
   } else {
     loginSub.textContent = '登录账号，回到校园';
     loginBtn.textContent = '登 录';
@@ -149,11 +170,8 @@ switchLink.addEventListener('click', (e) => {
     switchLink.textContent = '去注册';
     confirmGroup.style.display = 'none';
     document.getElementById('pwdRules').style.display = 'none';
+    document.getElementById('captchaGroup').style.display = 'none';
   }
-});
-
-headerUser.addEventListener('click', () => {
-  if (!currentUser) return;
   if (confirm('确定要退出登录吗？')) {
     localStorage.removeItem('campus_wall_nickname');
     currentUser = null; headerUser.textContent = '';
@@ -636,6 +654,7 @@ setTimeout(function(){
     }
   });
 },200);
+generateCaptcha();
 function checkLogin() {
   const saved = localStorage.getItem('campus_wall_nickname');
   if (saved) {
