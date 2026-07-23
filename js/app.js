@@ -1,6 +1,5 @@
 // js/app.js — 校园墙主逻辑
 
-// ========== DOM 引用 ==========
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
@@ -21,11 +20,9 @@ const commentInput = $('#commentInput');
 const sendCommentBtn = $('#sendComment');
 const toastEl = $('#toast');
 
-// ========== 状态 ==========
 let currentUser = null;
 let currentPostId = null;
 
-// ========== 工具函数 ==========
 function showToast(msg) {
   toastEl.textContent = msg;
   toastEl.classList.add('show');
@@ -56,15 +53,6 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ========== Supabase 检查 ==========
-function checkSupabase() {
-  if (typeof supabase === 'undefined' || !supabase) {
-    postList.innerHTML = '<div class="tip">⚠️ 网络连接失败，请检查网络后刷新页面</div>';
-    return false;
-  }
-  return true;
-}
-
 // ========== 登录 ==========
 function checkLogin() {
   const saved = localStorage.getItem('campus_wall_nickname');
@@ -72,7 +60,7 @@ function checkLogin() {
     currentUser = saved;
     loginModal.classList.remove('active');
     headerUser.textContent = '👤 ' + currentUser;
-    if (checkSupabase()) loadPosts();
+    loadPosts();
   } else {
     loginModal.classList.add('active');
   }
@@ -86,7 +74,7 @@ loginBtn.addEventListener('click', () => {
   localStorage.setItem('campus_wall_nickname', name);
   loginModal.classList.remove('active');
   headerUser.textContent = '👤 ' + currentUser;
-  if (checkSupabase()) loadPosts();
+  loadPosts();
 });
 
 nicknameInput.addEventListener('keydown', (e) => {
@@ -106,32 +94,21 @@ headerUser.addEventListener('click', () => {
 
 // ========== 帖子列表 ==========
 async function loadPosts() {
-  if (!checkSupabase()) return;
   postList.innerHTML = '<div class="tip">加载中...</div>';
 
   try {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      postList.innerHTML = '<div class="tip">加载失败：' + escapeHtml(error.message) + '</div>';
-      console.error(error);
-      return;
-    }
+    const { data } = await db.from('posts').select().order('created_at', { ascending: false }).get();
 
     if (!data || data.length === 0) {
       postList.innerHTML = '<div class="tip">还没有帖子，快来发第一条吧~</div>';
       return;
     }
 
-    const { data: likes } = await supabase
-      .from('likes')
-      .select('post_id')
-      .eq('user_nickname', currentUser);
-
-    const likedSet = new Set((likes || []).map(l => l.post_id));
+    let likedSet = new Set();
+    try {
+      const { data: likes } = await db.from('likes').select().eq('user_nickname', currentUser).get();
+      likedSet = new Set((likes || []).map(l => l.post_id));
+    } catch (e) { /* 忽略点赞查询错误 */ }
 
     postList.innerHTML = data.map((p, i) => `
       <div class="post-card" style="animation-delay:${i * 0.03}s">
@@ -161,14 +138,13 @@ async function loadPosts() {
       el.addEventListener('click', () => openComments(el.dataset.id));
     });
   } catch (err) {
-    postList.innerHTML = '<div class="tip">⚠️ 网络异常，请刷新重试</div>';
+    postList.innerHTML = '<div class="tip">⚠️ 加载失败，请刷新重试</div>';
     console.error(err);
   }
 }
 
 // ========== 点赞 ==========
 async function toggleLike(el) {
-  if (!checkSupabase()) return;
   const postId = el.dataset.id;
   const isLiked = el.classList.contains('liked');
   const countEl = el.querySelector('.like-count');
@@ -185,15 +161,14 @@ async function toggleLike(el) {
 
   try {
     if (isLiked) {
-      await supabase.from('likes').delete().eq('post_id', postId).eq('user_nickname', currentUser);
-      await supabase.rpc('decrement_like', { post_id: postId });
+      await db.from('likes').delete().eq('post_id', postId).eq('user_nickname', currentUser).exec();
+      await db.rpc('decrement_like', { post_id: postId });
     } else {
-      await supabase.from('likes').insert({ post_id: postId, user_nickname: currentUser });
-      await supabase.rpc('increment_like', { post_id: postId });
+      await db.from('likes').insert({ post_id: postId, user_nickname: currentUser });
+      await db.rpc('increment_like', { post_id: postId });
     }
   } catch (err) {
     console.error(err);
-    // 回滚
     if (isLiked) {
       el.classList.add('liked');
       el.querySelector('.act-icon').textContent = '❤️';
@@ -220,10 +195,6 @@ postContent.addEventListener('input', () => {
 });
 
 submitPost.addEventListener('click', async () => {
-  if (!checkSupabase()) {
-    showToast('网络异常，请刷新重试');
-    return;
-  }
   const content = postContent.value.trim();
   if (!content) return showToast('请输入内容');
 
@@ -231,7 +202,7 @@ submitPost.addEventListener('click', async () => {
   submitPost.textContent = '发布中...';
 
   try {
-    const { error } = await supabase.from('posts').insert({
+    const { error } = await db.from('posts').insert({
       nickname: currentUser,
       content,
       is_anonymous: anonCheck.checked,
@@ -240,7 +211,6 @@ submitPost.addEventListener('click', async () => {
     });
 
     if (error) {
-      console.error('发帖失败', error);
       showToast('发布失败：' + error.message);
     } else {
       showToast('发布成功！');
@@ -248,8 +218,8 @@ submitPost.addEventListener('click', async () => {
       loadPosts();
     }
   } catch (err) {
-    console.error('发帖异常', err);
     showToast('网络异常，请稍后重试');
+    console.error(err);
   } finally {
     submitPost.disabled = false;
     submitPost.textContent = '发布';
@@ -266,15 +236,8 @@ async function openComments(postId) {
 }
 
 async function loadComments(postId) {
-  if (!checkSupabase()) return;
   try {
-    const { data, error } = await supabase
-      .from('comments')
-      .select('*')
-      .eq('post_id', postId)
-      .order('created_at', { ascending: true });
-
-    if (error) { console.error(error); return; }
+    const { data } = await db.from('comments').select().eq('post_id', postId).order('created_at').get();
 
     if (!data || data.length === 0) {
       commentListEl.innerHTML = '<div class="tip" style="padding:30px">暂无评论，快来抢沙发~</div>';
@@ -300,30 +263,28 @@ async function loadComments(postId) {
 sendCommentBtn.addEventListener('click', async () => {
   const text = commentInput.value.trim();
   if (!text) return showToast('请输入评论');
-  if (!checkSupabase()) { showToast('网络异常'); return; }
 
   sendCommentBtn.disabled = true;
 
   try {
-    const { error } = await supabase.from('comments').insert({
+    const { error } = await db.from('comments').insert({
       post_id: currentPostId,
       nickname: currentUser,
       content: text
     });
 
     if (error) {
-      console.error(error);
       showToast('评论失败：' + error.message);
     } else {
-      await supabase.rpc('increment_comment', { post_id: currentPostId });
+      await db.rpc('increment_comment', { post_id: currentPostId });
       commentInput.value = '';
       showToast('评论成功');
       loadComments(currentPostId);
       loadPosts();
     }
   } catch (err) {
-    console.error(err);
     showToast('网络异常，请稍后重试');
+    console.error(err);
   } finally {
     sendCommentBtn.disabled = false;
   }
