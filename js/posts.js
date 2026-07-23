@@ -5,6 +5,52 @@ const POSTS_PER_PAGE = 20;
 let postsCache = [];
 let postsPage = 0;
 let postsHasMore = true;
+let postsSortBy = 'newest'; // newest | hottest
+let postsSearchKeyword = '';
+
+function filterAndSortPosts(posts) {
+  let result = posts;
+  // ????
+  if (postsSearchKeyword) {
+    const kw = postsSearchKeyword.toLowerCase();
+    result = result.filter(p => (p.content || '').toLowerCase().includes(kw) || (p.nickname || '').toLowerCase().includes(kw));
+  }
+  // ??
+  if (postsSortBy === 'hottest') {
+    result = [...result].sort((a, b) => (b.like_count || 0) - (a.like_count || 0));
+  }
+  return result;
+}
+
+function renderPostList() {
+  const postList = $('#postList');
+  const filtered = filterAndSortPosts(postsCache);
+  if (filtered.length === 0) {
+    postList.innerHTML = '<div class="tip">' + (postsSearchKeyword ? '???????' : '?????????????~') + '</div>';
+    return;
+  }
+  postList.innerHTML = filtered.map((p, i) => renderPostCard(p, i, new Set())).join('');
+  bindPostEvents();
+}
+
+function bindSearchEvents() {
+  const searchInput = $('#searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      postsSearchKeyword = searchInput.value.trim();
+      renderPostList();
+    });
+  }
+  document.querySelectorAll('.sort-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      postsSortBy = tab.dataset.sort;
+      renderPostList();
+    });
+  });
+}
+
 
 async function loadPosts(reset = true) {
   const postList = $('#postList');
@@ -33,12 +79,18 @@ async function loadPosts(reset = true) {
       likedSet = new Set((likes || []).map(l => l.post_id));
     } catch (e) {}
 
-    let html = postsCache.map((p, i) => renderPostCard(p, i, likedSet)).join('');
+    renderPostList();
     if (postsHasMore) {
-      html += '<div class="load-more"><button id="btnLoadMore" class="btn btn-outline btn-block">????</button></div>';
+      const btn = document.createElement('button');
+      btn.id = 'btnLoadMore';
+      btn.className = 'btn btn-outline btn-block';
+      btn.textContent = '????';
+      btn.addEventListener('click', () => loadPosts(false));
+      const wrapper = document.createElement('div');
+      wrapper.className = 'load-more';
+      wrapper.appendChild(btn);
+      $('#postList').appendChild(wrapper);
     }
-    postList.innerHTML = html;
-    bindPostEvents();
 
     const btn = document.getElementById('btnLoadMore');
     if (btn) btn.addEventListener('click', () => loadPosts(false));

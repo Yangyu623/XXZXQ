@@ -69,4 +69,5 @@ bindSendComment();
 bindMineTabs();
 bindProfileEvents();
 bindAdminEvents();
+bindSearchEvents();
 checkLogin();
