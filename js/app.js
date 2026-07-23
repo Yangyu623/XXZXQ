@@ -362,7 +362,7 @@ async function loadMinePage() {
   myNickname.textContent = currentUser;
   myAvatar.textContent = getAvatarEmoji(currentUser);
   mineContent.innerHTML = '<div class="tip">加载中...</div>';
-  #adminSection.style.display = window.isAdmin ? 'block' : 'none';
+  $('#adminSection').style.display = window.isAdmin ? 'block' : 'none';
   loadMinePosts();
 }
 
