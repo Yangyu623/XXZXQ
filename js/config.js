@@ -28,9 +28,12 @@ async function uploadImage(file) {
   const fileName = Date.now() + '-' + Math.random().toString(36).slice(2) + '.jpg';
   const formData = new FormData();
   formData.append('file', file, fileName);
+  const headers = new Headers();
+  headers.append('Authorization', 'Bearer ' + SUPABASE_KEY);
+  headers.append('apikey', SUPABASE_KEY);
   const res = await fetch(STORAGE_URL + fileName, {
     method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+    headers: headers,
     body: formData
   });
   if (!res.ok) { const errText = await res.text(); throw new Error('上传失败: ' + (errText || res.statusText)); }
