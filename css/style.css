@@ -157,3 +157,13 @@ header {
   pointer-events: none; transition: transform 0.2s ease;
 }
 #toast.show { transform: translate(-50%,-50%) scale(1); }
+/* 登录页补充 */
+.form-group input[type="password"] {
+  width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0;
+  border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s;
+}
+.form-group input[type="password"]:focus { border-color: #4A90D9; }
+.switch-mode { margin-top: 16px; font-size: 13px; color: #999; text-align: center; }
+.switch-mode a { color: #4A90D9; text-decoration: none; margin-left: 4px; }
+.switch-mode a:active { opacity: 0.6; }
+.login-box { padding-bottom: 32px !important; }

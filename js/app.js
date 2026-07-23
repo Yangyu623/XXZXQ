@@ -5,7 +5,13 @@ const $$ = (s) => document.querySelectorAll(s);
 
 const loginModal = $('#loginModal');
 const nicknameInput = $('#nicknameInput');
+const passwordInput = $('#passwordInput');
+const confirmInput = $('#confirmInput');
+const confirmGroup = $('#confirmGroup');
 const loginBtn = $('#loginBtn');
+const loginSub = $('#loginSub');
+const switchText = $('#switchText');
+const switchLink = $('#switchLink');
 const headerUser = $('#headerUser');
 const postList = $('#postList');
 const fabNew = $('#fabNew');
@@ -22,6 +28,7 @@ const toastEl = $('#toast');
 
 let currentUser = null;
 let currentPostId = null;
+let isRegisterMode = true; // true=注册 false=登录
 
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -53,32 +60,118 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ========== 登录 ==========
-function checkLogin() {
-  const saved = localStorage.getItem('campus_wall_nickname');
-  if (saved) {
-    currentUser = saved;
-    loginModal.classList.remove('active');
-    headerUser.textContent = '👤 ' + currentUser;
-    loadPosts();
+// SHA-256 哈希（浏览器原生）
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ========== 登录/注册 ==========
+
+// 切换注册/登录模式
+switchLink.addEventListener('click', () => {
+  isRegisterMode = !isRegisterMode;
+  if (isRegisterMode) {
+    confirmGroup.style.display = 'block';
+    loginBtn.textContent = '注 册';
+    loginSub.textContent = '注册账号，加入你的校园';
+    switchText.textContent = '已有账号？';
+    switchLink.textContent = '去登录';
   } else {
-    loginModal.classList.add('active');
+    confirmGroup.style.display = 'none';
+    loginBtn.textContent = '登 录';
+    loginSub.textContent = '欢迎回来，请输入密码';
+    switchText.textContent = '还没有账号？';
+    switchLink.textContent = '去注册';
+  }
+});
+
+// 注册
+async function doRegister(nickname, password, confirm) {
+  if (password !== confirm) { showToast('两次密码不一致'); return; }
+  if (password.length < 4) { showToast('密码至少4位'); return; }
+
+  const hash = await sha256(password);
+
+  try {
+    const { error } = await db.from('users').insert({
+      nickname,
+      password_hash: hash
+    });
+    if (error) {
+      showToast('注册失败，可能昵称已被占用');
+    } else {
+      showToast('注册成功！');
+      doLoginSuccess(nickname);
+    }
+  } catch (err) {
+    if (err.message.includes('duplicate')) {
+      showToast('昵称已被占用，换一个吧');
+    } else {
+      showToast('注册失败，请重试');
+    }
+    console.error(err);
   }
 }
 
-loginBtn.addEventListener('click', () => {
-  const name = nicknameInput.value.trim();
-  if (!name) return showToast('请输入昵称');
-  if (name.length > 12) return showToast('昵称最多12个字');
-  currentUser = name;
-  localStorage.setItem('campus_wall_nickname', name);
+// 登录
+async function doLogin(nickname, password) {
+  const hash = await sha256(password);
+
+  try {
+    const { data } = await db.from('users').select().eq('nickname', nickname).get();
+    if (!data || data.length === 0) {
+      showToast('账号不存在，请先注册');
+      return;
+    }
+    if (data[0].password_hash !== hash) {
+      showToast('密码错误');
+      return;
+    }
+    doLoginSuccess(nickname);
+  } catch (err) {
+    showToast('登录失败，请重试');
+    console.error(err);
+  }
+}
+
+function doLoginSuccess(nickname) {
+  currentUser = nickname;
+  localStorage.setItem('campus_wall_nickname', nickname);
   loginModal.classList.remove('active');
   headerUser.textContent = '👤 ' + currentUser;
   loadPosts();
+}
+
+loginBtn.addEventListener('click', async () => {
+  const name = nicknameInput.value.trim();
+  const pwd = passwordInput.value;
+  const confirm = confirmInput.value;
+
+  if (!name) return showToast('请输入昵称');
+  if (name.length > 12) return showToast('昵称最多12个字');
+  if (!pwd) return showToast('请输入密码');
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = isRegisterMode ? '注册中...' : '登录中...';
+
+  if (isRegisterMode) {
+    await doRegister(name, pwd, confirm);
+  } else {
+    await doLogin(name, pwd);
+  }
+
+  loginBtn.disabled = false;
+  loginBtn.textContent = isRegisterMode ? '注 册' : '登 录';
 });
 
-nicknameInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') loginBtn.click();
+// 回车提交
+[nicknameInput, passwordInput, confirmInput].forEach(el => {
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loginBtn.click();
+  });
 });
 
 headerUser.addEventListener('click', () => {
@@ -108,7 +201,7 @@ async function loadPosts() {
     try {
       const { data: likes } = await db.from('likes').select().eq('user_nickname', currentUser).get();
       likedSet = new Set((likes || []).map(l => l.post_id));
-    } catch (e) { /* 忽略点赞查询错误 */ }
+    } catch (e) {}
 
     postList.innerHTML = data.map((p, i) => `
       <div class="post-card" style="animation-delay:${i * 0.03}s">
@@ -309,4 +402,15 @@ $$('.modal-close').forEach(el => {
 });
 
 // ========== 启动 ==========
+function checkLogin() {
+  const saved = localStorage.getItem('campus_wall_nickname');
+  if (saved) {
+    currentUser = saved;
+    loginModal.classList.remove('active');
+    headerUser.textContent = '👤 ' + currentUser;
+    loadPosts();
+  } else {
+    loginModal.classList.add('active');
+  }
+}
 checkLogin();
