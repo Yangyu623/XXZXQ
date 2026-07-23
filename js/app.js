@@ -265,7 +265,7 @@ postContent.addEventListener('input', () => { charCount.textContent = postConten
 // ========== 发帖 ==========
 submitPost.addEventListener('click', async () => {
   const content = postContent.value.trim();
-  if (!content) { showToast('请输入内容'); return; }
+  if (!content && selectedImages.length === 0) { showToast('请输入内容或添加图片'); return; }
   submitPost.disabled = true; submitPost.textContent = '发布中...';
 
   try {
