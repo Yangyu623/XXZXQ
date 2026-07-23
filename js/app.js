@@ -116,7 +116,7 @@ passwordInput.addEventListener("input", () => {
 // 初始渲染密码规则
 passwordInput.dispatchEvent(new Event('input'));
 
-switchLink.addEventListener("click", (e) => { e.preventDefault();
+window.toggleLoginMode = function() {
   isRegisterMode = !isRegisterMode;
   confirmGroup.style.display = isRegisterMode ? 'block' : 'none';
   loginBtn.textContent = isRegisterMode ? '注 册' : '登 录';
@@ -124,7 +124,11 @@ switchLink.addEventListener("click", (e) => { e.preventDefault();
   switchText.textContent = isRegisterMode ? '已有账号？' : '还没有账号？';
   switchLink.textContent = isRegisterMode ? '去登录' : '去注册';
   pwdRules.style.display = isRegisterMode ? "block" : "none";
-});
+};
+
+// 初始渲染
+if (typeof pwdRules !== "undefined" && pwdRules) { pwdRules.style.display = "block"; passwordInput.dispatchEvent(new Event("input")); }
+
 
 
 function validateNickname(nick) {
