@@ -1,3 +1,5 @@
+window.toggleLoginMode = function(){
+var m=document.getElementById("confirmGroup");var b=document.getElementById("loginBtn");var s=document.getElementById("loginSub");var t=document.getElementById("switchText");var l=document.getElementById("switchLink");var p=document.getElementById("pwdRules");var reg=l.innerText==="去登录";l.innerText=reg?"去注册":"去登录";t.innerText=reg?"还没有账号？":"已有账号？";m.style.display=reg?"none":"block";b.textContent=reg?"登 录":"注 册";s.textContent=reg?"欢迎回来，请输入密码":"注册账号，加入你的校园";if(p)p.style.display=reg?"none":"block";};
 // js/app.js — 校园墙 v2
 
 async function disableUser(nickname) {
