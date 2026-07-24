@@ -1,4 +1,4 @@
-// js/config.js — Supabase REST API 封装 + 图片上传
+// js/config.js 鈥?Supabase REST API 灏佽 + 鍥剧墖涓婁紶
 
 const SUPABASE_URL = 'https://bavpuxqrifyiucpxoazp.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_5Ih00Go-bkwKmw7avKAHIA_aojZTRal';
@@ -23,7 +23,7 @@ async function api(method, path, body) {
   return text ? JSON.parse(text) : null;
 }
 
-// 图片上传
+// 鍥剧墖涓婁紶
 async function uploadImage(file) {
   const fileName = Date.now() + '-' + Math.random().toString(36).slice(2) + '.jpg';
   const formData = new FormData();
@@ -36,7 +36,7 @@ async function uploadImage(file) {
     headers: headers,
     body: formData
   });
-  if (!res.ok) { const errText = await res.text(); throw new Error('上传失败: ' + (errText || res.statusText)); }
+  if (!res.ok) { const errText = await res.text(); throw new Error('涓婁紶澶辫触: ' + (errText || res.statusText)); }
   const data = await res.json();
   return SUPABASE_URL + '/storage/v1/object/public/post-images/' + fileName;
 }
@@ -136,8 +136,6 @@ const db = {
       })
     })
   }),
-  rpc: async (fn, params) => {
-    await api('POST', '/rpc/' + fn, params);
-    return { error: null };
+  rpc: async (fn, params) => { const result = await api('POST', '/rpc/' + fn, params); return { data: result, error: null };
   }
 };
