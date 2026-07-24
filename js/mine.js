@@ -129,15 +129,14 @@ function bindProfileEvents() {
     const newNick = $('#editNickname').value.trim();
     const oldPwd = $('#editOldPwd').value;
     const newPwd = $('#editNewPwd').value;
-    if (!newNick) { showToast('请输入昵称'); return; }
-    if (newNick.length > 12) { showToast('昵称最多12个字'); return; }
-    if (!oldPwd) { showToast('请输入原密码'); return; }
+    if (!newNick) { showToast('?????'); return; }
+    if (newNick.length > 12) { showToast('????12??'); return; }
+    if (!oldPwd) { showToast('??????'); return; }
 
     try {
       const { data } = await db.rpc('check_old_password', { p_account: currentUser, p_password: oldPwd });
-      if (!data || data === false) { showToast('原密码错误'); return; }
+      if (!data || data === false) { showToast('?????'); return; }
 
-      // 检查昵称修改冷却
       if (newNick !== currentUserNickname) {
         const { data: userData } = await db.from('users').select('nickname_updated_at').eq('account', currentUser).get();
         if (userData && userData.length > 0 && userData[0].nickname_updated_at) {
@@ -145,36 +144,32 @@ function bindProfileEvents() {
           const oneMonth = 30 * 24 * 60 * 60 * 1000;
           if (Date.now() - lastUpdate < oneMonth) {
             const daysLeft = Math.ceil((oneMonth - (Date.now() - lastUpdate)) / (24 * 60 * 60 * 1000));
-            showToast('昵称每30天只能修改一次，还需等待 ' + daysLeft + ' 天');
+            showToast('???30???????????? ' + daysLeft + ' ?');
             return;
           }
         }
       }
 
-      const updateData = {};
-      if (newNick !== currentUserNickname) {
-        updateData.nickname = newNick;
-        updateData.nickname_updated_at = new Date().toISOString();
-      }
       if (newPwd) {
         const pwdErr = validatePassword(newPwd);
         if (pwdErr) { showToast(pwdErr); return; }
-        const newSalt = generateSalt();
-        updateData.password_hash = newSalt + ':' + await sha256s(newSalt, newPwd);
       }
 
-      if (Object.keys(updateData).length > 0) {
-        await db.from('users').update(updateData).eq('account', currentUser);
-      }
+      const newSalt = generateSalt();
+      const passwordHash = newPwd ? (newSalt + ':' + await sha256s(newSalt, newPwd)) : null;
+      
+      await db.rpc('update_profile_rpc', {
+        p_account: currentUser,
+        p_new_nickname: newNick !== currentUserNickname ? newNick : null,
+        p_new_password_hash: passwordHash
+      });
 
       if (newNick !== currentUserNickname) {
         currentUserNickname = newNick;
-        // 更新旧帖子/评论中的昵称引用（可选，这里先更新显示）
       }
-      $('#headerUser').textContent = '👤 ' + currentUserNickname + (window.isAdmin ? ' 🛡️' : '');
-      loadMinePage();
+      showToast('????');
       profileModal.classList.remove('active');
-      showToast('资料已更新');
-    } catch (err) { showToast('更新失败: ' + (err.message || '')); }
+    } catch (err) { showToast('????: ' + (err.message || '????')); }
   });
+
 }

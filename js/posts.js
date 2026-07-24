@@ -27,7 +27,7 @@ function renderPostList() {
   const postList = $('#postList');
   const filtered = filterAndSortPosts(postsCache);
   if (filtered.length === 0) {
-    postList.innerHTML = '<div class="tip">' + (postsSearchKeyword ? '\u6ca1\u6709\u5339\u914d\u7684\u5e16\u5b50' : '\u8fd8\u6ca1\u6709\u5e16\u5b50\uff0c\u5feb\u6765\u53d1\u7b2c\u4e00\u6761\u5427~') + '</div>';
+    postList.innerHTML = '<div class="tip">' + (postsSearchKeyword ? '\u8bf7\u8f93\u5165\u8bc4\u8bba\u5185\u5bb9' : '\u8fd8\u6ca1\u6709\u5e16\u5b50\uff0c\u5feb\u6765\u53d1\u7b2c\u4e00\u6761\u5427~') + '</div>';
     return;
   }
   postList.innerHTML = filtered.map((p, i) => renderPostCard(p, i, likedSet)).join('');
@@ -84,7 +84,7 @@ async function loadPosts(reset = true) {
       const btn = document.createElement('button');
       btn.id = 'btnLoadMore';
       btn.className = 'btn btn-outline btn-block';
-      btn.textContent = '????';
+      btn.textContent = '\u52a0\u8f7d\u66f4\u591a';
       btn.addEventListener('click', () => loadPosts(false));
       const wrapper = document.createElement('div');
       wrapper.className = 'load-more';
@@ -100,7 +100,7 @@ function renderPostCard(p, i, likedSet) {
   const imgHtml = imgs.length ? '<div class="post-images">' + imgs.map(u => '<img src="' + escapeHtml(u) + '" onclick="event.stopPropagation();openImageViewer(\'' + escapeHtml(u).replace(/'/g, "\\'") + '\')" />').join('') + '</div>' : '';
   return '<div class="post-card" style="animation-delay:' + (i * 0.03) + 's">' +
     '<div class="post-header"><div class="post-avatar">' + getAvatarEmoji(p.nickname) + '</div>' +
-    '<span class="post-nickname">' + (p.is_anonymous ? '????' : escapeHtml(p.nickname)) + '</span>' +
+    '<span class="post-nickname">' + (p.is_anonymous ? '\u52a0\u8f7d\u66f4\u591a' : escapeHtml(p.nickname)) + '</span>' +
     '<span class="post-time">' + formatTime(p.created_at) + '</span></div>' +
     '<div class="post-body">' + escapeHtml(p.content) + '</div>' + imgHtml +
     '<div class="post-actions">' +
@@ -127,7 +127,7 @@ async function deletePost(postId) {
     showToast('\u8fd8\u6ca1\u6709\u8bc4\u8bba');
     postsCache = postsCache.filter(p => p.id !== postId);
     renderPostList();
-  } catch (err) { showToast('????'); }
+  } catch (err) { showToast('\u64cd\u4f5c\u5931\u8d25'); }
 }
 
 async function toggleLike(el) {
@@ -143,7 +143,7 @@ async function toggleLike(el) {
     iconEl.textContent = liked ? '\u2728' : '\u2764';
   } catch (err) {
     el.classList.toggle('liked');
-    showToast('????');
+    showToast('\u64cd\u4f5c\u5931\u8d25');
   }
 }
 
@@ -205,7 +205,7 @@ function bindCommentEvents() {
     el.addEventListener('click', () => {
       replyTo = { id: el.dataset.replyId, nickname: el.dataset.replyNick };
       $('#replyHint').style.display = 'block';
-      $('#replyHint').textContent = '?? @' + replyTo.nickname;
+      $('#replyHint').textContent = '回复 @' + replyTo.nickname;
       $('#commentInput').focus();
     });
   });
@@ -221,25 +221,21 @@ function cancelReply() {
 }
 
 async function deleteComment(commentId, postId) {
-  if (!confirm('加载失败，请重试??')) return;
+  if (!confirm('确认删除这条评论吗？')) return;
   try {
     await db.rpc('delete_comment_rpc', { p_comment_id: commentId, p_account: currentUser });
-    showToast('\u8fd8\u6ca1\u6709\u8bc4\u8bba');
+    showToast('评论已删除');
     await loadComments(postId);
-    const { data } = await db.from('comments').select('id').eq('post_id', postId).get();
-    const newCount = data ? data.length : 0;
-    await db.from('posts').update({ comment_count: newCount }).eq('id', postId);
     loadPosts();
-  } catch (err) { showToast('????'); }
+  } catch (err) { showToast('删除失败'); }
 }
 
-// ????
 function bindSendComment() {
   const sendCommentBtn = $('#sendComment');
   const commentInput = $('#commentInput');
   sendCommentBtn.addEventListener('click', async () => {
     const content = commentInput.value.trim();
-    if (!content) { showToast('\u6ca1\u6709\u5339\u914d\u7684\u5e16\u5b50'); return; }
+    if (!content) { showToast('\u8bf7\u8f93\u5165\u8bc4\u8bba\u5185\u5bb9'); return; }
     if (!currentPostId) return;
     try {
       await db.rpc('add_comment', {
@@ -252,7 +248,7 @@ function bindSendComment() {
       commentInput.value = '';
       await loadComments(currentPostId);
       loadPosts();
-    } catch (err) { showToast('????: ' + (err.message || '????')); }
+    } catch (err) { showToast('\u8bc4\u8bba\u5931\u8d25: ' + (err.message || '\u672a\u77e5\u9519\u8bef')); }
   });
 }
 

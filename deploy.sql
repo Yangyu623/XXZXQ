@@ -28,16 +28,16 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- === 绗?姝ワ細鍏佽鎵€鏈変汉璇诲啓锛堢畝鍗曠殑瀹芥澗绛栫暐锛?==
 DROP POLICY IF EXISTS "allow_all_posts" ON posts;
-CREATE POLICY "allow_all_posts" ON posts FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "posts_select_anon" ON posts FOR SELECT TO anon USING (true);
 
 DROP POLICY IF EXISTS "allow_all_comments" ON comments;
-CREATE POLICY "allow_all_comments" ON comments FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "comments_select_anon" ON comments FOR SELECT TO anon USING (true);
 
 DROP POLICY IF EXISTS "allow_all_likes" ON likes;
-CREATE POLICY "allow_all_likes" ON likes FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "likes_select_anon" ON likes FOR SELECT TO anon USING (true);
 
 DROP POLICY IF EXISTS "allow_all_users" ON users;
-CREATE POLICY "allow_all_users" ON users FOR ALL TO anon USING (true) WITH CHECK (true);
+-- users: no anon access (only via RPC)
 
 -- === 绗?姝ワ細鍒楃骇淇濇姢 - 闅愯棌 password_hash ===
 REVOKE ALL ON users FROM anon;

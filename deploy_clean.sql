@@ -16,14 +16,20 @@ ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- ???????????????????? RPC ??????????
 DROP POLICY IF EXISTS "allow_all_posts" ON posts;
-CREATE POLICY "allow_all_posts" ON posts FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "posts_select_anon" ON posts;
+CREATE POLICY "posts_select_anon" ON posts FOR SELECT TO anon USING (true);
+
 DROP POLICY IF EXISTS "allow_all_comments" ON comments;
-CREATE POLICY "allow_all_comments" ON comments FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "comments_select_anon" ON comments;
+CREATE POLICY "comments_select_anon" ON comments FOR SELECT TO anon USING (true);
+
 DROP POLICY IF EXISTS "allow_all_likes" ON likes;
-CREATE POLICY "allow_all_likes" ON likes FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "likes_select_anon" ON likes;
+CREATE POLICY "likes_select_anon" ON likes FOR SELECT TO anon USING (true);
+
 DROP POLICY IF EXISTS "allow_all_users" ON users;
-CREATE POLICY "allow_all_users" ON users FOR ALL TO anon USING (true) WITH CHECK (true);
 REVOKE ALL ON users FROM anon;
 GRANT SELECT (account, nickname, status, is_admin, created_at, nickname_updated_at) ON public.users TO anon;
 GRANT UPDATE (nickname, nickname_updated_at, password_hash) ON public.users TO anon;

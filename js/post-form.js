@@ -103,20 +103,13 @@ function bindPostFormEvents() {
           imageUrls.push(url);
         }
       }
-      await db.from('posts').insert({
-        nickname: currentUserNickname || currentUser,
-        content: content || '',
-        images: imageUrls.length > 0 ? JSON.stringify(imageUrls) : null,
-        is_anonymous: $('#anonCheck').checked,
-        like_count: 0,
-        comment_count: 0
-      });
-      showToast('发布成功！');
-      postContent.value = '';
-      charCount.textContent = '0';
-      selectedImages = [];
-      renderImageGrid();
-      loadPosts();
+      await     await db.rpc('create_post_rpc', {
+      p_account: currentUser,
+      p_nickname: currentUserNickname || currentUser,
+      p_content: content,
+      p_is_anonymous: isAnonymous,
+      p_images: JSON.stringify(uploadedUrls)
+    })
     } catch (err) {
       showToast('发布失败: ' + (err.message || '网络错误'));
     }
