@@ -1,3 +1,15 @@
+
+-- ===== 0. 授权 anon 调用所有 RPC 函数（必须先执行） =====
+GRANT EXECUTE ON FUNCTION check_login TO anon;
+GRANT EXECUTE ON FUNCTION check_old_password TO anon;
+GRANT EXECUTE ON FUNCTION register_user TO anon;
+GRANT EXECUTE ON FUNCTION create_post TO anon;
+GRANT EXECUTE ON FUNCTION delete_post_rpc TO anon;
+GRANT EXECUTE ON FUNCTION toggle_like TO anon;
+GRANT EXECUTE ON FUNCTION add_comment TO anon;
+GRANT EXECUTE ON FUNCTION delete_comment_rpc TO anon;
+GRANT EXECUTE ON FUNCTION approve_user_rpc TO anon;
+GRANT EXECUTE ON FUNCTION clear_rejected TO anon;
 -- ============================================
 -- Supabase RLS 最终版 - 安全 + 防刷
 -- 按顺序执行全部
