@@ -10,13 +10,13 @@ let postsSearchKeyword = '';
 
 function filterAndSortPosts(posts) {
   let result = posts;
-  // ????
   if (postsSearchKeyword) {
     const kw = postsSearchKeyword.toLowerCase();
     result = result.filter(p => (p.content || '').toLowerCase().includes(kw) || (p.nickname || '').toLowerCase().includes(kw));
   }
-  // ??
   if (postsSortBy === 'hottest') {
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    result = result.filter(p => new Date(p.created_at).getTime() > oneMonthAgo);
     result = [...result].sort((a, b) => (b.like_count || 0) - (a.like_count || 0));
   }
   return result;
