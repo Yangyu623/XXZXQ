@@ -27,7 +27,7 @@ function renderPostList() {
   const postList = $('#postList');
   const filtered = filterAndSortPosts(postsCache);
   if (filtered.length === 0) {
-    postList.innerHTML = '<div class="tip">' + (postsSearchKeyword ? '???????' : '?????????????~') + '</div>';
+    postList.innerHTML = '<div class="tip">' + (postsSearchKeyword ? '\u6ca1\u6709\u5339\u914d\u7684\u5e16\u5b50' : '\u8fd8\u6ca1\u6709\u5e16\u5b50\uff0c\u5feb\u6765\u53d1\u7b2c\u4e00\u6761\u5427~') + '</div>';
     return;
   }
   postList.innerHTML = filtered.map((p, i) => renderPostCard(p, i, likedSet)).join('');
@@ -59,7 +59,7 @@ async function loadPosts(reset = true) {
     postsPage = 0;
     postsCache = [];
     postsHasMore = true;
-    postList.innerHTML = '<div class="tip">???...</div>';
+    postList.innerHTML = '<div class="tip">加载中...</div>';
   }
   try {
     const from = postsPage * POSTS_PER_PAGE;
@@ -67,7 +67,7 @@ async function loadPosts(reset = true) {
     const { data } = await db.from('posts').select().range(from, to).order('created_at', { ascending: false }).get();
     if (!data || data.length === 0) {
       postsHasMore = false;
-      if (postsCache.length === 0) postList.innerHTML = '<div class="tip">?????????????~</div>';
+      if (postsCache.length === 0) postList.innerHTML = '<div class="tip">还没有帖子，快来发第一条吧~</div>';
       return;
     }
     postsCache = postsCache.concat(data);
@@ -92,7 +92,7 @@ async function loadPosts(reset = true) {
       $('#postList').appendChild(wrapper);
     }
 
-  } catch (err) { postList.innerHTML = '<div class="tip">????????</div>'; }
+  } catch (err) { postList.innerHTML = '<div class="tip">加载失败，请重试</div>'; }
 }
 
 function renderPostCard(p, i, likedSet) {
@@ -121,10 +121,10 @@ function bindPostEvents() {
 }
 
 async function deletePost(postId) {
-  if (!confirm('??????????')) return;
+  if (!confirm('加载失败，请重试??')) return;
   try {
     await db.rpc('delete_post_rpc', { p_post_id: postId, p_account: currentUser });
-    showToast('?????');
+    showToast('\u8fd8\u6ca1\u6709\u8bc4\u8bba');
     postsCache = postsCache.filter(p => p.id !== postId);
     renderPostList();
   } catch (err) { showToast('????'); }
@@ -160,17 +160,17 @@ async function openComments(postId) {
 
 async function loadComments(postId) {
   const commentListEl = $('#commentList');
-  commentListEl.innerHTML = '<div class="tip">???...</div>';
+  commentListEl.innerHTML = '<div class="tip">加载中...</div>';
   try {
     const { data } = await db.from('comments').select().eq('post_id', postId).order('created_at').get();
     if (!data || data.length === 0) {
-      commentListEl.innerHTML = '<div class="tip">?????</div>';
+      commentListEl.innerHTML = '<div class="tip">还没有评论</div>';
     } else {
       const tree = buildCommentTree(data);
       commentListEl.innerHTML = tree.map(c => renderCommentItem(c, false)).join('');
       bindCommentEvents();
     }
-  } catch (err) { commentListEl.innerHTML = '<div class="tip">??????</div>'; }
+  } catch (err) { commentListEl.innerHTML = '<div class="tip">评论加载失败</div>'; }
 }
 
 function buildCommentTree(comments) {
@@ -217,14 +217,14 @@ function bindCommentEvents() {
 function cancelReply() {
   replyTo = null;
   $('#replyHint').style.display = 'none';
-  $('#commentInput').placeholder = '??????...';
+  $('#commentInput').placeholder = '???加载中...';
 }
 
 async function deleteComment(commentId, postId) {
-  if (!confirm('??????????')) return;
+  if (!confirm('加载失败，请重试??')) return;
   try {
     await db.rpc('delete_comment_rpc', { p_comment_id: commentId, p_account: currentUser });
-    showToast('?????');
+    showToast('\u8fd8\u6ca1\u6709\u8bc4\u8bba');
     await loadComments(postId);
     const { data } = await db.from('comments').select('id').eq('post_id', postId).get();
     const newCount = data ? data.length : 0;
@@ -239,7 +239,7 @@ function bindSendComment() {
   const commentInput = $('#commentInput');
   sendCommentBtn.addEventListener('click', async () => {
     const content = commentInput.value.trim();
-    if (!content) { showToast('???????'); return; }
+    if (!content) { showToast('\u6ca1\u6709\u5339\u914d\u7684\u5e16\u5b50'); return; }
     if (!currentPostId) return;
     try {
       await db.rpc('add_comment', {
