@@ -1,6 +1,6 @@
-// js/posts.js 闁?闁告帒鍢茬粭?/ 闁绘劗顢婄粋?/ 閻犲洤瀚?
+// js/posts.js - ???? / ?? / ?? / ??
 
-// ????
+// ??
 const POSTS_PER_PAGE = 20;
 let postsCache = [];
 let postsPage = 0;
@@ -75,7 +75,7 @@ async function loadPosts(reset = true) {
     postsPage++;
 
     try {
-      const { data: likes } = await db.from('likes').select().eq('user_nickname', currentUserNickname || currentUser).get();
+      const { data: likes } = await db.from('likes').select().eq('user_account', currentUser).get();
       likedSet = new Set((likes || []).map(l => l.post_id));
     } catch (e) {}
 
@@ -92,8 +92,7 @@ async function loadPosts(reset = true) {
       $('#postList').appendChild(wrapper);
     }
 
-
-  } catch (err) { postList.innerHTML = '<div class="tip">?? ??????????</div>'; }
+  } catch (err) { postList.innerHTML = '<div class="tip">????????</div>'; }
 }
 
 function renderPostCard(p, i, likedSet) {
@@ -101,16 +100,16 @@ function renderPostCard(p, i, likedSet) {
   const imgHtml = imgs.length ? '<div class="post-images">' + imgs.map(u => '<img src="' + escapeHtml(u) + '" onclick="event.stopPropagation();openImageViewer(\'' + escapeHtml(u).replace(/'/g, "\\'") + '\')" />').join('') + '</div>' : '';
   return '<div class="post-card" style="animation-delay:' + (i * 0.03) + 's">' +
     '<div class="post-header"><div class="post-avatar">' + getAvatarEmoji(p.nickname) + '</div>' +
-    '<span class="post-nickname">' + (p.is_anonymous ? '闁告牕鐏濋幃鏇㈡偨閵婏箑鐓? : escapeHtml(p.nickname)) + '</span>' +
+    '<span class="post-nickname">' + (p.is_anonymous ? '????' : escapeHtml(p.nickname)) + '</span>' +
     '<span class="post-time">' + formatTime(p.created_at) + '</span></div>' +
     '<div class="post-body">' + escapeHtml(p.content) + '</div>' + imgHtml +
     '<div class="post-actions">' +
     '<div class="act ' + ((likedSet && likedSet.has(p.id)) ? 'liked' : '') + '" data-action="like" data-id="' + p.id + '">' +
-    '<span class="act-icon">' + ((likedSet && likedSet.has(p.id)) ? '闁村倶鍊х粭? : '妫ｅ喚妲?) + '</span>' +
+    '<span class="act-icon">' + ((likedSet && likedSet.has(p.id)) ? '\u2764' : '\u2728') + '</span>' +
     '<span class="like-count">' + (p.like_count || 0) + '</span></div>' +
     '<div class="act" data-action="comment" data-id="' + p.id + '">' +
-    '<span class="act-icon">妫ｅ啯灏?/span><span>' + (p.comment_count || 0) + '</span></div>' +
-    (window.isAdmin ? '<div class="act act-delete" data-action="deletePost" data-id="' + p.id + '"><span class="act-icon">妫ｅ啯顥戦柨?/span>闁告帞濞€濞?/div>' : '') +
+    '<span class="act-icon">\ud83d\udcac</span><span>' + (p.comment_count || 0) + '</span></div>' +
+    (window.isAdmin ? '<div class="act act-delete" data-action="deletePost" data-id="' + p.id + '"><span class="act-icon">\ud83d\uddd1</span>??</div>' : '') +
     '</div></div>';
 }
 
@@ -122,13 +121,13 @@ function bindPostEvents() {
 }
 
 async function deletePost(postId) {
-  if (!confirm('缁绢収鍠栭悾鍓ф啺娴ｇ鐏╅梻鍕╁€涚换鏍级閳ュ磭鐟悗娑欏姇閹囨晬閻斿壊鍔冮柟鍨С缂嶆梹绋夊鍛闁诡厹鍨归ˇ鏌ュΥ?)) return;
+  if (!confirm('??????????')) return;
   try {
     await db.rpc('delete_post_rpc', { p_post_id: postId, p_account: currentUser });
-    showToast('閻㈩垱鐗曢悺娆忣啅閹绘帒鐏╅梻?);
-    loadPosts();
-    
-  } catch (err) { showToast('闁告帞濞€濞呭孩寰勬潏顐バ?); }
+    showToast('?????');
+    postsCache = postsCache.filter(p => p.id !== postId);
+    renderPostList();
+  } catch (err) { showToast('????'); }
 }
 
 async function toggleLike(el) {
@@ -141,14 +140,17 @@ async function toggleLike(el) {
     const { data } = await db.rpc('toggle_like', { p_post_id: postId, p_account: currentUser });
     const newCount = data || 0;
     countEl.textContent = newCount;
-    iconEl.textContent = liked ? '妫ｅ喚妲? : '闁村倶鍊х粭?;
+    iconEl.textContent = liked ? '\u2728' : '\u2764';
   } catch (err) {
     el.classList.toggle('liked');
-    showToast('闁瑰灝绉崇紞鏃€寰勬潏顐バ?);
+    showToast('????');
   }
 }
 
-// ===== 閻犲洤瀚?=====
+// ===== ???? =====
+let currentPostId = null;
+let replyTo = null;
+
 async function openComments(postId) {
   currentPostId = postId;
   const commentModal = $('#commentModal');
@@ -158,17 +160,17 @@ async function openComments(postId) {
 
 async function loadComments(postId) {
   const commentListEl = $('#commentList');
-  commentListEl.innerHTML = '<div class="tip">闁告梻濮惧ù鍥ㄧ▔?..</div>';
+  commentListEl.innerHTML = '<div class="tip">???...</div>';
   try {
     const { data } = await db.from('comments').select().eq('post_id', postId).order('created_at').get();
     if (!data || data.length === 0) {
-      commentListEl.innerHTML = '<div class="tip">闁哄棗鍊瑰Λ銈囨嫚閸曨噮鍟?/div>';
+      commentListEl.innerHTML = '<div class="tip">?????</div>';
     } else {
       const tree = buildCommentTree(data);
       commentListEl.innerHTML = tree.map(c => renderCommentItem(c, false)).join('');
       bindCommentEvents();
     }
-  } catch (err) { commentListEl.innerHTML = '<div class="tip">闁告梻濮惧ù鍥ㄥ緞鏉堫偉袝</div>'; }
+  } catch (err) { commentListEl.innerHTML = '<div class="tip">??????</div>'; }
 }
 
 function buildCommentTree(comments) {
@@ -190,8 +192,8 @@ function renderCommentItem(c, isChild) {
     '<span class="comment-time">' + formatTime(c.created_at) + '</span></div>' +
     '<div class="comment-text">' + escapeHtml(c.content) + '</div>' +
     '<div class="comment-actions">' +
-    '<span class="comment-reply" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">闁搞儳鍋涢ˇ?/span>' +
-    (c.nickname === currentUser ? '<span class="comment-delete" data-delete-id="' + c.id + '">闁告帞濞€濞?/span>' : '') +
+    '<span class="comment-reply" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">??</span>' +
+    (c.nickname === currentUser ? '<span class="comment-delete" data-delete-id="' + c.id + '">??</span>' : '') +
     '</div>' +
     (c.children && c.children.length ? c.children.map(ch => renderCommentItem(ch, true)).join('') : '') +
     '</div></div>';
@@ -203,7 +205,7 @@ function bindCommentEvents() {
     el.addEventListener('click', () => {
       replyTo = { id: el.dataset.replyId, nickname: el.dataset.replyNick };
       $('#replyHint').style.display = 'block';
-      $('#replyHint').textContent = '闁搞儳鍋涢ˇ?@' + replyTo.nickname;
+      $('#replyHint').textContent = '?? @' + replyTo.nickname;
       $('#commentInput').focus();
     });
   });
@@ -215,29 +217,29 @@ function bindCommentEvents() {
 function cancelReply() {
   replyTo = null;
   $('#replyHint').style.display = 'none';
-  $('#commentInput').placeholder = '閻犲洤顕崑锝嗙閳ь剚绋?..';
+  $('#commentInput').placeholder = '??????...';
 }
 
 async function deleteComment(commentId, postId) {
-  if (!confirm('缁绢収鍠栭悾鍓ф啺娴ｇ鐏╅梻鍕╁€涚换鏍级闄囬惁搴ｆ媼閸濆嫭鍋嬮柨?)) return;
+  if (!confirm('??????????')) return;
   try {
     await db.rpc('delete_comment_rpc', { p_comment_id: commentId, p_account: currentUser });
-    showToast('閻犲洤瀚鎴濐啅閹绘帒鐏╅梻?);
+    showToast('?????');
     await loadComments(postId);
     const { data } = await db.from('comments').select('id').eq('post_id', postId).get();
     const newCount = data ? data.length : 0;
     await db.from('posts').update({ comment_count: newCount }).eq('id', postId);
     loadPosts();
-  } catch (err) { showToast('闁告帞濞€濞呭孩寰勬潏顐バ?); }
+  } catch (err) { showToast('????'); }
 }
 
-// 闁告瑦鍨块埀顑挎祰閻﹀海鎷?
+// ????
 function bindSendComment() {
   const sendCommentBtn = $('#sendComment');
   const commentInput = $('#commentInput');
   sendCommentBtn.addEventListener('click', async () => {
     const content = commentInput.value.trim();
-    if (!content) { showToast('閻犲洨鏌夌欢顓㈠礂閵夈劎妲戦悹浣告惈閸炲鈧?); return; }
+    if (!content) { showToast('???????'); return; }
     if (!currentPostId) return;
     try {
       await db.rpc('add_comment', {
@@ -250,7 +252,7 @@ function bindSendComment() {
       commentInput.value = '';
       await loadComments(currentPostId);
       loadPosts();
-    } catch (err) { showToast('閻犲洤瀚鎴炲緞鏉堫偉袝: ' + (err.message || '缂傚啯鍨圭划鍫曟煥濞嗘帩鍤?)); }
+    } catch (err) { showToast('????: ' + (err.message || '????')); }
   });
 }
 

@@ -104,7 +104,7 @@ async function rejectUser(account) {
 }
 
 async function disableUser(account) {
-  if (!confirm('确定要禁用用户 "' + nickname + '" 吗？\n该用户的所有帖子、评论、点赞都将被删除。')) return;
+  if (!confirm('确定要禁用用户 "' + account + '" 吗？\n该用户的所有帖子、评论、点赞都将被删除。')) return;
   try {
     await db.rpc('approve_user_rpc', { p_admin_account: currentUser, p_target_account: account, p_action: 'disable' });
     showToast('用户 ' + account + ' 已被禁用');

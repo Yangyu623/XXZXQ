@@ -104,7 +104,7 @@ function bindPostFormEvents() {
         }
       }
       await db.from('posts').insert({
-        nickname: currentUser,
+        nickname: currentUserNickname || currentUser,
         content: content || '',
         images: imageUrls.length > 0 ? JSON.stringify(imageUrls) : null,
         is_anonymous: $('#anonCheck').checked,
