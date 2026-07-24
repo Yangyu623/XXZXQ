@@ -105,7 +105,7 @@ BEGIN
 END; $$;
 
 -- ===== 9. RPC：发帖 =====
-CREATE OR REPLACE FUNCTION create_post(p_nickname text, p_content text, p_images text, p_is_anonymous boolean)
+CREATE OR REPLACE FUNCTION create_post(p_account text, p_content text, p_images text, p_is_anonymous boolean)
 RETURNS SETOF posts LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_user users%ROWTYPE; v_post posts%ROWTYPE;
 BEGIN
@@ -120,7 +120,7 @@ BEGIN
 END; $$;
 
 -- ===== 10. RPC：删帖 =====
-CREATE OR REPLACE FUNCTION delete_post_rpc(p_post_id bigint, p_nickname text)
+CREATE OR REPLACE FUNCTION delete_post_rpc(p_post_id bigint, p_account text)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_post posts%ROWTYPE; v_user users%ROWTYPE;
 BEGIN
@@ -135,7 +135,7 @@ BEGIN
 END; $$;
 
 -- ===== 11. RPC：点赞 =====
-CREATE OR REPLACE FUNCTION toggle_like(p_post_id bigint, p_nickname text)
+CREATE OR REPLACE FUNCTION toggle_like(p_post_id bigint, p_account text)
 RETURNS integer LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_like likes%ROWTYPE; v_count integer;
 BEGIN
@@ -148,7 +148,7 @@ BEGIN
 END; $$;
 
 -- ===== 12. RPC：发评论 =====
-CREATE OR REPLACE FUNCTION add_comment(p_post_id bigint, p_nickname text, p_content text, p_parent_id bigint DEFAULT NULL)
+CREATE OR REPLACE FUNCTION add_comment(p_post_id bigint, p_account text, p_content text, p_parent_id bigint DEFAULT NULL)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_count integer; v_user users%ROWTYPE;
 BEGIN

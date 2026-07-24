@@ -60,7 +60,7 @@ function bindMineDeleteEvents() {
 
 async function deleteMinePost(postId) {
   try {
-    await db.rpc('delete_post_rpc', { p_post_id: postId, p_nickname: currentUserNickname || currentUser });
+    await db.rpc('delete_post_rpc', { p_post_id: postId, p_account: currentUser });
     showToast('帖子已删除');
     const activeTab = document.querySelector('.mine-tab.active');
     if (activeTab) {

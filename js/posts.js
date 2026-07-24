@@ -125,7 +125,7 @@ function bindPostEvents() {
 async function deletePost(postId) {
   if (!confirm('确定要删除这条帖子吗？此操作不可恢复。')) return;
   try {
-    await db.rpc('delete_post_rpc', { p_post_id: postId, p_nickname: currentUserNickname || currentUser });
+    await db.rpc('delete_post_rpc', { p_post_id: postId, p_account: currentUser });
     showToast('帖子已删除');
     loadPosts();
     
@@ -139,7 +139,7 @@ async function toggleLike(el) {
   const iconEl = el.querySelector('.act-icon');
   const countEl = el.querySelector('.like-count');
   try {
-    const { data } = await db.rpc('toggle_like', { p_post_id: postId, p_nickname: currentUserNickname || currentUser });
+    const { data } = await db.rpc('toggle_like', { p_post_id: postId, p_account: currentUser });
     const newCount = data || 0;
     countEl.textContent = newCount;
     iconEl.textContent = liked ? '🤍' : '❤️';
@@ -222,7 +222,7 @@ function cancelReply() {
 async function deleteComment(commentId, postId) {
   if (!confirm('确定要删除这条评论吗？')) return;
   try {
-    await db.rpc('delete_comment_rpc', { p_comment_id: commentId, p_nickname: currentUserNickname || currentUser });
+    await db.rpc('delete_comment_rpc', { p_comment_id: commentId, p_account: currentUser });
     showToast('评论已删除');
     await loadComments(postId);
     const { data } = await db.from('comments').select('id').eq('post_id', postId).get();
