@@ -78,7 +78,18 @@ function bindPostFormEvents() {
     charCount.textContent = postContent.value.length;
   });
 
+  // ?????30??
+  let postCooldown = 0;
+  function getPostCooldown() {
+    const last = localStorage.getItem('post_last_attempt');
+    if (!last) return 0;
+    return Math.max(0, 30000 - (Date.now() - parseInt(last)));
+  }
+
   submitPost.addEventListener('click', async () => {
+    const cd = getPostCooldown();
+    if (cd > 0) { showToast('??? ' + Math.ceil(cd / 1000) + ' ?????'); return; }
+
     const content = postContent.value.trim();
     if (!content && selectedImages.length === 0) { showToast('请输入内容或选择图片'); return; }
     submitPost.disabled = true;
