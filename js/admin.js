@@ -37,6 +37,17 @@ function bindAdminEvents() {
   document.querySelector('[data-modal="adminModal"]').addEventListener('click', () => {
     adminModal.classList.remove('active');
   });
+  const btnClear = $('#btnClearRejected');
+  if (btnClear) btnClear.addEventListener('click', clearRejectedUsers);
+}
+
+async function clearRejectedUsers() {
+  if (!confirm('确定要删除所有已拒绝的用户吗？此操作不可恢复。')) return;
+  try {
+    await db.from('users').delete().eq('status', 'rejected').exec();
+    showToast('已清空所有已拒绝用户');
+    loadAdminUsers();
+  } catch (err) { showToast('操作失败'); }
 }
 
 async function loadAdminUsers() {
