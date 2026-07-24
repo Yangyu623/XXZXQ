@@ -41,6 +41,22 @@ async function uploadImage(file) {
   return SUPABASE_URL + '/storage/v1/object/public/post-images/' + fileName;
 }
 
+
+// ?????
+async function checkBannedWords(text) {
+  try {
+    const { data } = await db.from('banned_words').select('word').get();
+    if (!data || !data.length) return [];
+    const hits = [];
+    for (const row of data) {
+      if (text.toLowerCase().includes(row.word.toLowerCase())) {
+        hits.push(row.word);
+      }
+    }
+    return hits;
+  } catch (e) { return []; }
+}
+
 const db = {
   from: (table) => ({
     select: (columns) => ({

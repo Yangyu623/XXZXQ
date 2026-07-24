@@ -121,7 +121,7 @@ function bindPostEvents() {
 }
 
 async function deletePost(postId) {
-  if (!confirm('加载失败，请重试??')) return;
+  if (!confirm('确认删除这条帖子吗？')) return;
   try {
     await db.rpc('delete_post_rpc', { p_post_id: postId, p_account: currentUser });
     showToast('\u8fd8\u6ca1\u6709\u8bc4\u8bba');
@@ -217,7 +217,7 @@ function bindCommentEvents() {
 function cancelReply() {
   replyTo = null;
   $('#replyHint').style.display = 'none';
-  $('#commentInput').placeholder = '???加载中...';
+  $('#commentInput').placeholder = '输入你的评论...';
 }
 
 async function deleteComment(commentId, postId) {
@@ -237,7 +237,13 @@ function bindSendComment() {
     const content = commentInput.value.trim();
     if (!content) { showToast('\u8bf7\u8f93\u5165\u8bc4\u8bba\u5185\u5bb9'); return; }
     if (!currentPostId) return;
-    try {
+   
+    const bannedHits = await checkBannedWords(content);
+    if (bannedHits.length > 0) {
+      showToast('内容包含违稁词：' + bannedHits.join('、'));
+      return;
+    }
+ try {
       await db.rpc('add_comment', {
         p_post_id: currentPostId,
         p_account: currentUser,

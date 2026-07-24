@@ -129,13 +129,13 @@ function bindProfileEvents() {
     const newNick = $('#editNickname').value.trim();
     const oldPwd = $('#editOldPwd').value;
     const newPwd = $('#editNewPwd').value;
-    if (!newNick) { showToast('?????'); return; }
-    if (newNick.length > 12) { showToast('????12??'); return; }
-    if (!oldPwd) { showToast('??????'); return; }
+    if (!newNick) { showToast('请输入昵称'); return; }
+    if (newNick.length > 12) { showToast('昵称最多12个字'); return; }
+    if (!oldPwd) { showToast('请输入原密码'); return; }
 
     try {
       const { data } = await db.rpc('check_old_password', { p_account: currentUser, p_password: oldPwd });
-      if (!data || data === false) { showToast('?????'); return; }
+      if (!data || data === false) { showToast('请输入昵称'); return; }
 
       if (newNick !== currentUserNickname) {
         const { data: userData } = await db.from('users').select('nickname_updated_at').eq('account', currentUser).get();
@@ -144,7 +144,7 @@ function bindProfileEvents() {
           const oneMonth = 30 * 24 * 60 * 60 * 1000;
           if (Date.now() - lastUpdate < oneMonth) {
             const daysLeft = Math.ceil((oneMonth - (Date.now() - lastUpdate)) / (24 * 60 * 60 * 1000));
-            showToast('???30???????????? ' + daysLeft + ' ?');
+            showToast('昵称每30天只能修改一次，还需等待 ' + daysLeft + ' 天');
             return;
           }
         }
@@ -167,9 +167,9 @@ function bindProfileEvents() {
       if (newNick !== currentUserNickname) {
         currentUserNickname = newNick;
       }
-      showToast('????');
+      showToast('保存成功');
       profileModal.classList.remove('active');
-    } catch (err) { showToast('????: ' + (err.message || '????')); }
+    } catch (err) { showToast('保存失败: ' + (err.message || '未知错误')); }
   });
 
 }

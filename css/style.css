@@ -350,3 +350,14 @@ header {
   color: #666;
 }
 .load-more button:hover { background: #e0e0e0; }
+
+/* ????? */
+.admin-search { display: flex; gap: 8px; align-items: center; }
+.admin-search input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+.bw-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f8f8f8; border-radius: 8px; margin-bottom: 6px; }
+.bw-item span { font-size: 15px; font-weight: 500; }
+.btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 6px; cursor: pointer; border: none; }
+.btn-primary { background: #4a90d9; color: #fff; }
+.btn-primary:hover { background: #357abd; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-danger:hover { background: #c0392b; }

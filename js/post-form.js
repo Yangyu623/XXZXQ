@@ -88,13 +88,19 @@ function bindPostFormEvents() {
 
   submitPost.addEventListener('click', async () => {
     const cd = getPostCooldown();
-    if (cd > 0) { showToast('??? ' + Math.ceil(cd / 1000) + ' ?????'); return; }
+    if (cd > 0) { showToast('发帖太快，请 ' + Math.ceil(cd / 1000) + ' 秒后再试'); return; }
 
     const content = postContent.value.trim();
     if (!content && selectedImages.length === 0) { showToast('请输入内容或选择图片'); return; }
     submitPost.disabled = true;
     submitPost.textContent = '发布中...';
-    try {
+   
+    const bannedHits = await checkBannedWords(content);
+    if (bannedHits.length > 0) {
+      showToast('内容包含违禁词：' + bannedHits.join('、'));
+      return;
+    }
+ try {
       let imageUrls = [];
       if (selectedImages.length > 0) {
         for (const f of selectedImages) {
