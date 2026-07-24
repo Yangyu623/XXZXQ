@@ -102,20 +102,19 @@ async function doLogin(nickname, password) {
     return;
   }
   try {
-    const { data } = await db.from('users').select('nickname,password_hash,status,is_admin').eq('nickname', nickname).get();
-    if (!data || data.length === 0) { recordLoginFailure(); showToast('用户不存在'); return; }
-    const parts = (data[0].password_hash || '').split(':');
-    if (parts.length === 1) {
-      const inputHash = await sha256(password);
-      if (data[0].password_hash !== inputHash) { recordLoginFailure(); showToast('密码错误'); return; }
-    } else {
-      const inputHash = await sha256s(parts[0], password);
-      if (parts[1] !== inputHash) { recordLoginFailure(); showToast('密码错误'); return; }
+    const { data } = await db.rpc('check_login', { p_nickname: nickname, p_password: password });
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      recordLoginFailure();
+      showToast('用户不存在');
+      return;
     }
-    if (data[0].status === 'pending') { showToast('账号待审核中，请等待管理员通过'); return; }
-    if (data[0].status === 'rejected') { showToast('账号已被拒绝'); return; }
-    if (data[0].status === 'disabled') { showToast('账号已被禁用'); return; }
-    doLoginSuccess(nickname, data[0].is_admin);
+    const result = data[0];
+    if (!result.success) {
+      recordLoginFailure();
+      showToast(result.error_msg || '登录失败');
+      return;
+    }
+    doLoginSuccess(nickname, result.is_admin);
   } catch (err) {
     console.error('登录错误:', err);
     showToast('登录失败: ' + (err.message || err.toString()));
