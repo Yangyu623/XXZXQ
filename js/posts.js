@@ -109,7 +109,7 @@ function renderPostCard(p, i, likedSet) {
     '<span class="like-count">' + (p.like_count || 0) + '</span></div>' +
     '<div class="act" data-action="comment" data-id="' + p.id + '">' +
     '<span class="act-icon">\ud83d\udcac</span><span>' + (p.comment_count || 0) + '</span></div>' +
-    (window.isAdmin ? '<div class="act act-delete" data-action="deletePost" data-id="' + p.id + '"><span class="act-icon">\ud83d\uddd1</span>??</div>' : '') +
+    (window.isAdmin ? '<div class="act act-delete" data-action="deletePost" data-id="' + p.id + '"><span class="act-icon">\ud83d\uddd1</span>\u5220\u9664</div>' : '') +
     '</div></div>';
 }
 
