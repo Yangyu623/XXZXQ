@@ -3,20 +3,34 @@
 
 // 图片压缩（最大宽1200px，质量0.8）
 async function compressImage(file) {
+  // Skip if already <= 5MB
+  if (file.size <= 5 * 1024 * 1024) return file;
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       const MAX_W = 1200;
       let w = img.width, h = img.height;
       if (w > MAX_W) { h = h * MAX_W / w; w = MAX_W; }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob(blob => {
-        if (blob) resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-        else resolve(file);
-      }, 'image/jpeg', 0.8);
+
+      const tryCompress = (quality, maxW) => {
+        let cw = w, ch = h;
+        if (cw > maxW) { ch = ch * maxW / cw; cw = maxW; }
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        canvas.toBlob(blob => {
+          if (!blob) { resolve(file); return; }
+          if (blob.size <= 5 * 1024 * 1024 || quality <= 0.3) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          } else {
+            tryCompress(quality - 0.15, maxW * 0.7);
+          }
+        }, 'image/jpeg', quality);
+      };
+
+      tryCompress(0.8, MAX_W);
     };
     img.onerror = () => resolve(file);
     img.src = URL.createObjectURL(file);
