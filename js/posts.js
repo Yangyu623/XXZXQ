@@ -243,7 +243,7 @@ function bindSendComment() {
     try {
       await db.rpc('add_comment', {
         p_post_id: currentPostId,
-        p_nickname: currentUserNickname || currentUser,
+        p_account: currentUser,
         p_content: content,
         p_parent_id: replyTo ? replyTo.id : null
       });
