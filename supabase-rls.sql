@@ -59,12 +59,12 @@ CREATE POLICY "deny_anon_update_u" ON users AS RESTRICTIVE FOR UPDATE TO anon US
 CREATE POLICY "deny_anon_delete_u" ON users AS RESTRICTIVE FOR DELETE TO anon USING (false);
 
 -- ===== 6. RPC：登录验证（密码哈希不离开服务器） =====
-CREATE OR REPLACE FUNCTION check_login(p_nickname text, p_password text)
+CREATE OR REPLACE FUNCTION check_login(p_account text, p_password text)
 RETURNS TABLE(success boolean, is_admin boolean, status text, error_msg text)
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE user_row users%ROWTYPE;
 BEGIN
-  SELECT * INTO user_row FROM users WHERE nickname = p_nickname;
+  SELECT * INTO user_row FROM users WHERE account = p_account;
   IF NOT FOUND THEN RETURN QUERY SELECT false, false, '', '用户不存在'; RETURN; END IF;
   IF user_row.status = 'pending' THEN RETURN QUERY SELECT false, false, user_row.status, '账号待审核'; RETURN; END IF;
   IF user_row.status = 'rejected' THEN RETURN QUERY SELECT false, false, user_row.status, '账号已被拒绝'; RETURN; END IF;
@@ -81,11 +81,11 @@ BEGIN
 END; $$;
 
 -- ===== 7. RPC：验证旧密码 =====
-CREATE OR REPLACE FUNCTION check_old_password(p_nickname text, p_password text)
+CREATE OR REPLACE FUNCTION check_old_password(p_account text, p_password text)
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE user_row users%ROWTYPE;
 BEGIN
-  SELECT * INTO user_row FROM users WHERE nickname = p_nickname;
+  SELECT * INTO user_row FROM users WHERE account = p_account;
   IF NOT FOUND THEN RETURN false; END IF;
   IF position(':' in user_row.password_hash) > 0 THEN
     RETURN user_row.password_hash = split_part(user_row.password_hash, ':', 1) || ':' || encode(digest(split_part(user_row.password_hash, ':', 1) || p_password, 'sha256'), 'hex');
@@ -95,7 +95,7 @@ BEGIN
 END; $$;
 
 -- ===== 8. RPC：注册 =====
-CREATE OR REPLACE FUNCTION register_user(p_nickname text, p_password_hash text)
+CREATE OR REPLACE FUNCTION register_user(p_account text, p_nickname text, p_password_hash text)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   IF (SELECT COUNT(*) FROM users WHERE created_at > NOW() - INTERVAL '1 hour') >= 30 THEN
@@ -109,9 +109,9 @@ CREATE OR REPLACE FUNCTION create_post(p_nickname text, p_content text, p_images
 RETURNS SETOF posts LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_user users%ROWTYPE; v_post posts%ROWTYPE;
 BEGIN
-  SELECT * INTO v_user FROM users WHERE nickname = p_nickname;
+  SELECT * INTO v_user FROM users WHERE account = p_account;
   IF NOT FOUND OR v_user.status != 'approved' THEN RAISE EXCEPTION '用户未通过审核'; END IF;
-  IF (SELECT COUNT(*) FROM posts WHERE nickname = p_nickname AND created_at > NOW() - INTERVAL '1 hour') >= 20 THEN
+  IF (SELECT COUNT(*) FROM posts WHERE account = p_account AND created_at > NOW() - INTERVAL '1 hour') >= 20 THEN
     RAISE EXCEPTION '发帖过于频繁';
   END IF;
   INSERT INTO posts (nickname, content, images, is_anonymous, like_count, comment_count)
@@ -126,7 +126,7 @@ DECLARE v_post posts%ROWTYPE; v_user users%ROWTYPE;
 BEGIN
   SELECT * INTO v_post FROM posts WHERE id = p_post_id;
   IF NOT FOUND THEN RAISE EXCEPTION '帖子不存在'; END IF;
-  SELECT * INTO v_user FROM users WHERE nickname = p_nickname;
+  SELECT * INTO v_user FROM users WHERE account = p_account;
   IF NOT FOUND THEN RAISE EXCEPTION '用户不存在'; END IF;
   IF v_post.nickname != p_nickname AND NOT v_user.is_admin THEN RAISE EXCEPTION '无权删除'; END IF;
   DELETE FROM likes WHERE post_id = p_post_id;
@@ -152,7 +152,7 @@ CREATE OR REPLACE FUNCTION add_comment(p_post_id bigint, p_nickname text, p_cont
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_count integer; v_user users%ROWTYPE;
 BEGIN
-  SELECT * INTO v_user FROM users WHERE nickname = p_nickname;
+  SELECT * INTO v_user FROM users WHERE account = p_account;
   IF NOT FOUND OR v_user.status != 'approved' THEN RAISE EXCEPTION '用户未通过审核'; END IF;
   INSERT INTO comments (post_id, nickname, content, parent_id) VALUES (p_post_id, p_nickname, p_content, p_parent_id);
   SELECT COUNT(*) INTO v_count FROM comments WHERE post_id = p_post_id;
@@ -166,7 +166,7 @@ DECLARE v_comment comments%ROWTYPE; v_user users%ROWTYPE; v_count integer;
 BEGIN
   SELECT * INTO v_comment FROM comments WHERE id = p_comment_id;
   IF NOT FOUND THEN RAISE EXCEPTION '评论不存在'; END IF;
-  SELECT * INTO v_user FROM users WHERE nickname = p_nickname;
+  SELECT * INTO v_user FROM users WHERE account = p_account;
   IF NOT FOUND THEN RAISE EXCEPTION '用户不存在'; END IF;
   IF v_comment.nickname != p_nickname AND NOT v_user.is_admin THEN RAISE EXCEPTION '无权删除'; END IF;
   DELETE FROM comments WHERE id = p_comment_id;
@@ -175,19 +175,19 @@ BEGIN
 END; $$;
 
 -- ===== 14. RPC：审核/禁用用户 =====
-CREATE OR REPLACE FUNCTION approve_user_rpc(p_admin text, p_nickname text, p_action text)
+CREATE OR REPLACE FUNCTION approve_user_rpc(p_admin_account text, p_target_account text, p_action text)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_admin users%ROWTYPE;
 BEGIN
-  SELECT * INTO v_admin FROM users WHERE nickname = p_admin;
+  SELECT * INTO v_admin FROM users WHERE account = p_admin_account AND is_admin = true;
   IF NOT FOUND OR NOT v_admin.is_admin THEN RAISE EXCEPTION '无管理员权限'; END IF;
-  IF p_action = 'approve' THEN UPDATE users SET status = 'approved' WHERE nickname = p_nickname;
-  ELSIF p_action = 'reject' THEN UPDATE users SET status = 'rejected' WHERE nickname = p_nickname;
+  IF p_action = 'approve' THEN UPDATE users SET status = 'approved' WHERE account = p_account;
+  ELSIF p_action = 'reject' THEN UPDATE users SET status = 'rejected' WHERE account = p_account;
   ELSIF p_action = 'disable' THEN
     DELETE FROM likes WHERE user_nickname = p_nickname;
-    DELETE FROM comments WHERE nickname = p_nickname;
-    DELETE FROM posts WHERE nickname = p_nickname;
-    UPDATE users SET status = 'disabled' WHERE nickname = p_nickname;
+    DELETE FROM comments WHERE account = p_account;
+    DELETE FROM posts WHERE account = p_account;
+    UPDATE users SET status = 'disabled' WHERE account = p_account;
   END IF;
 END; $$;
 
@@ -196,7 +196,7 @@ CREATE OR REPLACE FUNCTION clear_rejected(p_admin text)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_admin users%ROWTYPE;
 BEGIN
-  SELECT * INTO v_admin FROM users WHERE nickname = p_admin;
+  SELECT * INTO v_admin FROM users WHERE account = p_admin_account AND is_admin = true;
   IF NOT FOUND OR NOT v_admin.is_admin THEN RAISE EXCEPTION '无管理员权限'; END IF;
   DELETE FROM users WHERE status = 'rejected';
 END; $$;
