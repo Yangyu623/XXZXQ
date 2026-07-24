@@ -56,8 +56,8 @@ async function loadAdminUsers() {
   list.innerHTML = '<div class="tip">加载中...</div>';
   try {
     const { data } = adminTab === 'pending'
-      ? await db.from('users').select().eq('status', 'pending').order('created_at').get()
-      : await db.from('users').select().eq('status', 'approved').order('created_at').get();
+      ? await db.from('users').select('nickname,status,is_admin,created_at').eq('status', 'pending').order('created_at').get()
+      : await db.from('users').select('nickname,status,is_admin,created_at').eq('status', 'approved').order('created_at').get();
 
     const filtered = keyword ? (data || []).filter(u => u.nickname.toLowerCase().includes(keyword)) : (data || []);
 
