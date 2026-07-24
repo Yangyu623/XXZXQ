@@ -92,8 +92,7 @@ async function loadPosts(reset = true) {
       $('#postList').appendChild(wrapper);
     }
 
-    const btn = document.getElementById('btnLoadMore');
-    if (btn) btn.addEventListener('click', () => loadPosts(false));
+
   } catch (err) { postList.innerHTML = '<div class="tip">?? ??????????</div>'; }
 }
 

@@ -42,6 +42,7 @@ CREATE POLICY "allow_all_users" ON users FOR ALL TO anon USING (true) WITH CHECK
 -- === 绗?姝ワ細鍒楃骇淇濇姢 - 闅愯棌 password_hash ===
 REVOKE ALL ON users FROM anon;
 GRANT SELECT (account, nickname, status, is_admin, created_at, nickname_updated_at) ON public.users TO anon;
+GRANT UPDATE (nickname, nickname_updated_at, password_hash) ON public.users TO anon;
 
 -- === 绗?姝ワ細check_login 鐧诲綍楠岃瘉 ===
 DROP FUNCTION IF EXISTS check_login(text,text);
