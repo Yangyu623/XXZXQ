@@ -66,7 +66,9 @@ function bindMineDeleteEvents() {
 
 async function deleteMinePost(postId) {
   try {
-    await db.rpc('delete_post_rpc', { p_post_id: postId, p_nickname: currentUser });
+    await db.from('likes').delete().eq('post_id', postId).exec();
+    await db.from('comments').delete().eq('post_id', postId).exec();
+    await db.from('posts').delete().eq('id', postId).exec();
     showToast('帖子已删除');
     const activeTab = document.querySelector('.mine-tab.active');
     if (activeTab) {
@@ -147,7 +149,8 @@ function bindProfileEvents() {
   document.querySelector('[data-modal="profileModal"]').addEventListener('click', () => {
     profileModal.classList.remove('active');
   });
-}db.rpc('check_old_password', { p_nickname: currentUser, p_password: oldPwd });
+}
+db.rpc('check_old_password', { p_nickname: currentUser, p_password: oldPwd });
       if (!data || data === false) { showToast('原密码错误'); return; }async function loadMinePage() {
   if (!currentUser) return;
   const myNickname = $('#myNickname');
@@ -210,20 +213,6 @@ function bindMineDeleteEvents() {
       }
     });
   });
-}
-
-async function deleteMinePost(postId) {
-  try {
-    await db.rpc('delete_post_rpc', { p_post_id: postId, p_nickname: currentUser });
-    showToast('帖子已删除');
-    const activeTab = document.querySelector('.mine-tab.active');
-    if (activeTab) {
-      if (activeTab.dataset.tab === 'myPosts') loadMinePosts();
-      else if (activeTab.dataset.tab === 'myLikes') loadMineLikes();
-      else if (activeTab.dataset.tab === 'myComments') loadMineComments();
-    }
-    loadPosts();
-  } catch (err) { showToast('删除失败'); }
 }
 
 function renderCompactPost(p) {
