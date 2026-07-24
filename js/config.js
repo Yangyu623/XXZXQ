@@ -74,6 +74,13 @@ const db = {
         }
       }),
       in: (col, vals) => ({
+        order: (ocol, opts) => ({
+          async get() {
+            const q = '?select=' + (columns || '*') + '&' + col + '=in.(' + vals.join(',') + ')';
+            const ord = '&order=' + ocol + '.' + (opts?.ascending === false ? 'desc' : 'asc');
+            return { data: await api('GET', '/' + table + q + ord), error: null };
+          }
+        }),
         async get() {
           const q = '?select=' + (columns || '*') + '&' + col + '=in.(' + vals.join(',') + ')';
           return { data: await api('GET', '/' + table + q), error: null };

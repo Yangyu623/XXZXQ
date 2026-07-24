@@ -75,7 +75,7 @@ async function loadPosts(reset = true) {
     postsPage++;
 
     try {
-      const { data: likes } = await db.from('likes').select().eq('user_account', currentUser).get();
+      const { data: likes } = await db.from('likes').select().eq('user_nickname', currentUserNickname || currentUser).get();
       likedSet = new Set((likes || []).map(l => l.post_id));
     } catch (e) {}
 
@@ -192,8 +192,8 @@ function renderCommentItem(c, isChild) {
     '<span class="comment-time">' + formatTime(c.created_at) + '</span></div>' +
     '<div class="comment-text">' + escapeHtml(c.content) + '</div>' +
     '<div class="comment-actions">' +
-    '<span class="comment-reply" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">??</span>' +
-    (c.nickname === currentUser ? '<span class="comment-delete" data-delete-id="' + c.id + '">??</span>' : '') +
+    '<span class="comment-reply" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span>' +
+    (c.nickname === (currentUserNickname || currentUser) ? '<span class="comment-delete" data-delete-id="' + c.id + '">删除</span>' : '') +
     '</div>' +
     (c.children && c.children.length ? c.children.map(ch => renderCommentItem(ch, true)).join('') : '') +
     '</div></div>';
