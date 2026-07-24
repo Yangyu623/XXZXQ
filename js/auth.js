@@ -85,8 +85,7 @@ async function doRegister(nickname, password, confirm) {
   const salt = generateSalt();
   const hash = await sha256s(salt, password);
   try {
-    const { error } = await db.from('users').insert({ nickname, password_hash: salt + ':' + hash });
-    if (error) throw error;
+    await db.rpc('register_user', { p_nickname: nickname, p_password_hash: salt + ':' + hash });
     showToast('注册成功，等待管理员审核');
     auth_loginBtn().disabled = false;
     auth_loginBtn().textContent = '注 册';

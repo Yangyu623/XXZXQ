@@ -66,9 +66,7 @@ function bindMineDeleteEvents() {
 
 async function deleteMinePost(postId) {
   try {
-    await db.from('likes').delete().eq('post_id', postId).exec();
-    await db.from('comments').delete().eq('post_id', postId).exec();
-    await db.from('posts').delete().eq('id', postId).exec();
+    await db.rpc('delete_post_rpc', { p_post_id: postId, p_nickname: currentUser });
     showToast('帖子已删除');
     const activeTab = document.querySelector('.mine-tab.active');
     if (activeTab) {
@@ -216,9 +214,7 @@ function bindMineDeleteEvents() {
 
 async function deleteMinePost(postId) {
   try {
-    await db.from('likes').delete().eq('post_id', postId).exec();
-    await db.from('comments').delete().eq('post_id', postId).exec();
-    await db.from('posts').delete().eq('id', postId).exec();
+    await db.rpc('delete_post_rpc', { p_post_id: postId, p_nickname: currentUser });
     showToast('帖子已删除');
     const activeTab = document.querySelector('.mine-tab.active');
     if (activeTab) {

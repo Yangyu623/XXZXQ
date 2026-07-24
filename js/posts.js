@@ -125,12 +125,10 @@ function bindPostEvents() {
 async function deletePost(postId) {
   if (!confirm('确定要删除这条帖子吗？此操作不可恢复。')) return;
   try {
-    await db.from('likes').delete().eq('post_id', postId).exec();
-    await db.from('comments').delete().eq('post_id', postId).exec();
-    await db.from('posts').delete().eq('id', postId).exec();
+    await db.rpc('delete_post_rpc', { p_post_id: postId, p_nickname: currentUser });
     showToast('帖子已删除');
     loadPosts();
-    refreshMineIfActive();
+    
   } catch (err) { showToast('删除失败'); }
 }
 
@@ -141,18 +139,10 @@ async function toggleLike(el) {
   const iconEl = el.querySelector('.act-icon');
   const countEl = el.querySelector('.like-count');
   try {
-    if (liked) {
-      await db.from('likes').delete().eq('post_id', postId).eq('user_nickname', currentUser).exec();
-    } else {
-      await db.from('likes').insert({ post_id: postId, user_nickname: currentUser });
-    }
-    const { data } = await db.from('likes').select('id').eq('post_id', postId).get();
-    const newCount = data ? data.length : 0;
+    const { data } = await db.rpc('toggle_like', { p_post_id: postId, p_nickname: currentUser });
+    const newCount = data || 0;
     countEl.textContent = newCount;
     iconEl.textContent = liked ? '🤍' : '❤️';
-    try {
-      await db.from('posts').update({ like_count: newCount }).eq('id', postId);
-    } catch (e) {}
   } catch (err) {
     el.classList.toggle('liked');
     showToast('操作失败');
@@ -232,7 +222,7 @@ function cancelReply() {
 async function deleteComment(commentId, postId) {
   if (!confirm('确定要删除这条评论吗？')) return;
   try {
-    await db.from('comments').delete().eq('id', commentId).exec();
+    await db.rpc('delete_comment_rpc', { p_comment_id: commentId, p_nickname: currentUser });
     showToast('评论已删除');
     await loadComments(postId);
     const { data } = await db.from('comments').select('id').eq('post_id', postId).get();
@@ -251,12 +241,12 @@ function bindSendComment() {
     if (!content) { showToast('请输入评论内容'); return; }
     if (!currentPostId) return;
     try {
-      const commentData = { post_id: currentPostId, nickname: currentUser, content };
-      if (replyTo) { commentData.parent_id = replyTo.id; }
-      await db.from('comments').insert(commentData);
-      const { data } = await db.from('comments').select('id').eq('post_id', currentPostId).get();
-      const newCount = data ? data.length : 0;
-      await db.from('posts').update({ comment_count: newCount }).eq('id', currentPostId);
+      await db.rpc('add_comment', {
+        p_post_id: currentPostId,
+        p_nickname: currentUser,
+        p_content: content,
+        p_parent_id: replyTo ? replyTo.id : null
+      });
       cancelReply();
       commentInput.value = '';
       await loadComments(currentPostId);

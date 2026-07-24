@@ -44,7 +44,7 @@ function bindAdminEvents() {
 async function clearRejectedUsers() {
   if (!confirm('确定要删除所有已拒绝的用户吗？此操作不可恢复。')) return;
   try {
-    await db.from('users').delete().eq('status', 'rejected').exec();
+    await db.rpc('clear_rejected', { p_admin: currentUser });
     showToast('已清空所有已拒绝用户');
     loadAdminUsers();
   } catch (err) { showToast('操作失败'); }
@@ -89,35 +89,24 @@ async function loadAdminUsers() {
 
 async function approveUser(nickname) {
   try {
-    const { data } = await db.from('users').update({ status: 'approved' }).eq('nickname', nickname);
-    if (data && data.length > 0) {
-      showToast('已通过 ' + nickname);
-      loadAdminUsers();
-    } else {
-      showToast('审核失败：未找到该用户或权限不足');
-    }
+    await db.rpc('approve_user_rpc', { p_admin: currentUser, p_nickname: nickname, p_action: 'approve' });
+    showToast('已通过 ' + nickname);
+    loadAdminUsers();
   } catch (err) { showToast('网络错误: ' + (err.message || '未知')); }
 }
 
 async function rejectUser(nickname) {
   try {
-    const { data } = await db.from('users').update({ status: 'rejected' }).eq('nickname', nickname);
-    if (data && data.length > 0) {
-      showToast('已拒绝 ' + nickname);
-      loadAdminUsers();
-    } else {
-      showToast('审核失败：未找到该用户或权限不足');
-    }
+    await db.rpc('approve_user_rpc', { p_admin: currentUser, p_nickname: nickname, p_action: 'reject' });
+    showToast('已拒绝 ' + nickname);
+    loadAdminUsers();
   } catch (err) { showToast('网络错误: ' + (err.message || '未知')); }
 }
 
 async function disableUser(nickname) {
   if (!confirm('确定要禁用用户 "' + nickname + '" 吗？\n该用户的所有帖子、评论、点赞都将被删除。')) return;
   try {
-    await db.from('likes').delete().eq('user_nickname', nickname).exec();
-    await db.from('comments').delete().eq('nickname', nickname).exec();
-    await db.from('posts').delete().eq('nickname', nickname).exec();
-    await db.from('users').update({ status: 'disabled' }).eq('nickname', nickname);
+    await db.rpc('approve_user_rpc', { p_admin: currentUser, p_nickname: nickname, p_action: 'disable' });
     showToast('用户 ' + nickname + ' 已被禁用');
     loadAdminUsers();
     loadPosts();
