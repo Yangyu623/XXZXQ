@@ -240,7 +240,7 @@ function bindSendComment() {
    
     const bannedHits = await checkBannedWords(content);
     if (bannedHits.length > 0) {
-      showToast('内容包含违稁词：' + bannedHits.join('、'));
+      showToast('内容包含违禁词：' + bannedHits.join('、'));
       return;
     }
  try {
