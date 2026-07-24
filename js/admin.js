@@ -1,4 +1,4 @@
-﻿// js/admin.js — 管理员面板
+// js/admin.js — 管理员面板
 
 let adminTab = 'pending';
 
@@ -56,10 +56,10 @@ async function loadAdminUsers() {
   list.innerHTML = '<div class="tip">加载中...</div>';
   try {
     const { data } = adminTab === 'pending'
-      ? await db.from('users').select('nickname,status,is_admin,created_at').eq('status', 'pending').order('created_at').get()
-      : await db.from('users').select('nickname,status,is_admin,created_at').eq('status', 'approved').order('created_at').get();
+      ? await db.from('users').select('account,nickname,status,is_admin,created_at').eq('status', 'pending').order('created_at').get()
+      : await db.from('users').select('account,nickname,status,is_admin,created_at').eq('status', 'approved').order('created_at').get();
 
-    const filtered = keyword ? (data || []).filter(u => (u.nickname || '').toLowerCase().includes(keyword) || (u.account || '').toLowerCase().includes(keyword)) : (data || []);
+    const filtered = keyword ? (data || []).filter(u => (u.nickname || u.account || '').toLowerCase().includes(keyword)) : (data || []);
 
     if (!filtered || filtered.length === 0) {
       list.innerHTML = '<div class="tip">' + (keyword ? '没有匹配用户' : (adminTab === 'pending' ? '没有待审核用户' : '没有已通过用户')) + '</div>';
@@ -69,15 +69,15 @@ async function loadAdminUsers() {
     list.innerHTML = filtered.map(u => '<div class="admin-user-item">' +
       '<div class="admin-user-info">' +
       '<div class="admin-user-avatar">' + getAvatarEmoji(u.nickname) + '</div>' +
-      '<div><div class="admin-user-name">' + escapeHtml(u.nickname) + (u.is_admin ? ' 🛡️' : '') + '</div>' +
+      '<div><div class="admin-user-name">' + escapeHtml(u.account) + (u.is_admin ? ' 🛡️' : '') + '</div>' +
       '<div class="admin-user-time">' + formatTime(u.created_at) + '</div></div>' +
       '</div>' +
       (adminTab === 'pending'
         ? '<div class="admin-actions">' +
-          '<button class="btn-approve" data-account="' + escapeHtml(u.nickname) + '">通过</button>' +
-          '<button class="btn-reject" data-account="' + escapeHtml(u.nickname) + '">拒绝</button></div>'
+          '<button class="btn-approve" data-account="' + escapeHtml(u.account) + '">通过</button>' +
+          '<button class="btn-reject" data-account="' + escapeHtml(u.account) + '">拒绝</button></div>'
         : '<div class="admin-actions"><span class="badge-status badge-approved">已通过</span>' +
-          (u.is_admin ? '' : '<button class="btn-disable" data-account="' + escapeHtml(u.nickname) + '">禁用</button>') + '</div>'
+          (u.is_admin ? '' : '<button class="btn-disable" data-account="' + escapeHtml(u.account) + '">禁用</button>') + '</div>'
       ) +
       '</div>').join('');
 
@@ -87,27 +87,27 @@ async function loadAdminUsers() {
   } catch (err) { list.innerHTML = '<div class="tip">加载失败</div>'; }
 }
 
-async function approveUser(nickname) {
+async function approveUser(account) {
   try {
-    await db.rpc('approve_user_rpc', { p_admin_account: currentUser, p_target_account: nickname, p_action: 'approve' });
-    showToast('已通过 ' + nickname);
+    await db.rpc('approve_user_rpc', { p_admin_account: currentUser, p_target_account: account, p_action: 'approve' });
+    showToast('已通过 ' + account);
     loadAdminUsers();
   } catch (err) { showToast('网络错误: ' + (err.message || '未知')); }
 }
 
-async function rejectUser(nickname) {
+async function rejectUser(account) {
   try {
-    await db.rpc('approve_user_rpc', { p_admin_account: currentUser, p_target_account: nickname, p_action: 'reject' });
-    showToast('已拒绝 ' + nickname);
+    await db.rpc('approve_user_rpc', { p_admin_account: currentUser, p_target_account: account, p_action: 'reject' });
+    showToast('已拒绝 ' + account);
     loadAdminUsers();
   } catch (err) { showToast('网络错误: ' + (err.message || '未知')); }
 }
 
-async function disableUser(nickname) {
+async function disableUser(account) {
   if (!confirm('确定要禁用用户 "' + nickname + '" 吗？\n该用户的所有帖子、评论、点赞都将被删除。')) return;
   try {
-    await db.rpc('approve_user_rpc', { p_admin_account: currentUser, p_target_account: nickname, p_action: 'disable' });
-    showToast('用户 ' + nickname + ' 已被禁用');
+    await db.rpc('approve_user_rpc', { p_admin_account: currentUser, p_target_account: account, p_action: 'disable' });
+    showToast('用户 ' + account + ' 已被禁用');
     loadAdminUsers();
     loadPosts();
   } catch (err) { showToast('操作失败'); }

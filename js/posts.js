@@ -1,4 +1,4 @@
-﻿// js/posts.js — 刷帖 / 点赞 / 评论
+// js/posts.js 闁?闁告帒鍢茬粭?/ 闁绘劗顢婄粋?/ 閻犲洤瀚?
 
 // ????
 const POSTS_PER_PAGE = 20;
@@ -7,6 +7,7 @@ let postsPage = 0;
 let postsHasMore = true;
 let postsSortBy = 'newest'; // newest | hottest
 let postsSearchKeyword = '';
+let likedSet = new Set();
 
 function filterAndSortPosts(posts) {
   let result = posts;
@@ -29,7 +30,7 @@ function renderPostList() {
     postList.innerHTML = '<div class="tip">' + (postsSearchKeyword ? '???????' : '?????????????~') + '</div>';
     return;
   }
-  postList.innerHTML = filtered.map((p, i) => renderPostCard(p, i, new Set())).join('');
+  postList.innerHTML = filtered.map((p, i) => renderPostCard(p, i, likedSet)).join('');
   bindPostEvents();
 }
 
@@ -73,7 +74,6 @@ async function loadPosts(reset = true) {
     postsHasMore = data.length === POSTS_PER_PAGE;
     postsPage++;
 
-    let likedSet = new Set();
     try {
       const { data: likes } = await db.from('likes').select().eq('user_nickname', currentUserNickname || currentUser).get();
       likedSet = new Set((likes || []).map(l => l.post_id));
@@ -102,16 +102,16 @@ function renderPostCard(p, i, likedSet) {
   const imgHtml = imgs.length ? '<div class="post-images">' + imgs.map(u => '<img src="' + escapeHtml(u) + '" onclick="event.stopPropagation();openImageViewer(\'' + escapeHtml(u).replace(/'/g, "\\'") + '\')" />').join('') + '</div>' : '';
   return '<div class="post-card" style="animation-delay:' + (i * 0.03) + 's">' +
     '<div class="post-header"><div class="post-avatar">' + getAvatarEmoji(p.nickname) + '</div>' +
-    '<span class="post-nickname">' + (p.is_anonymous ? '匿名用户' : escapeHtml(p.nickname)) + '</span>' +
+    '<span class="post-nickname">' + (p.is_anonymous ? '闁告牕鐏濋幃鏇㈡偨閵婏箑鐓? : escapeHtml(p.nickname)) + '</span>' +
     '<span class="post-time">' + formatTime(p.created_at) + '</span></div>' +
     '<div class="post-body">' + escapeHtml(p.content) + '</div>' + imgHtml +
     '<div class="post-actions">' +
-    '<div class="act ' + (likedSet.has(p.id) ? 'liked' : '') + '" data-action="like" data-id="' + p.id + '">' +
-    '<span class="act-icon">' + (likedSet.has(p.id) ? '❤️' : '🤍') + '</span>' +
+    '<div class="act ' + ((likedSet && likedSet.has(p.id)) ? 'liked' : '') + '" data-action="like" data-id="' + p.id + '">' +
+    '<span class="act-icon">' + ((likedSet && likedSet.has(p.id)) ? '闁村倶鍊х粭? : '妫ｅ喚妲?) + '</span>' +
     '<span class="like-count">' + (p.like_count || 0) + '</span></div>' +
     '<div class="act" data-action="comment" data-id="' + p.id + '">' +
-    '<span class="act-icon">💬</span><span>' + (p.comment_count || 0) + '</span></div>' +
-    (window.isAdmin ? '<div class="act act-delete" data-action="deletePost" data-id="' + p.id + '"><span class="act-icon">🗏️</span>删除</div>' : '') +
+    '<span class="act-icon">妫ｅ啯灏?/span><span>' + (p.comment_count || 0) + '</span></div>' +
+    (window.isAdmin ? '<div class="act act-delete" data-action="deletePost" data-id="' + p.id + '"><span class="act-icon">妫ｅ啯顥戦柨?/span>闁告帞濞€濞?/div>' : '') +
     '</div></div>';
 }
 
@@ -123,13 +123,13 @@ function bindPostEvents() {
 }
 
 async function deletePost(postId) {
-  if (!confirm('确定要删除这条帖子吗？此操作不可恢复。')) return;
+  if (!confirm('缁绢収鍠栭悾鍓ф啺娴ｇ鐏╅梻鍕╁€涚换鏍级閳ュ磭鐟悗娑欏姇閹囨晬閻斿壊鍔冮柟鍨С缂嶆梹绋夊鍛闁诡厹鍨归ˇ鏌ュΥ?)) return;
   try {
     await db.rpc('delete_post_rpc', { p_post_id: postId, p_account: currentUser });
-    showToast('帖子已删除');
+    showToast('閻㈩垱鐗曢悺娆忣啅閹绘帒鐏╅梻?);
     loadPosts();
     
-  } catch (err) { showToast('删除失败'); }
+  } catch (err) { showToast('闁告帞濞€濞呭孩寰勬潏顐バ?); }
 }
 
 async function toggleLike(el) {
@@ -142,14 +142,14 @@ async function toggleLike(el) {
     const { data } = await db.rpc('toggle_like', { p_post_id: postId, p_account: currentUser });
     const newCount = data || 0;
     countEl.textContent = newCount;
-    iconEl.textContent = liked ? '🤍' : '❤️';
+    iconEl.textContent = liked ? '妫ｅ喚妲? : '闁村倶鍊х粭?;
   } catch (err) {
     el.classList.toggle('liked');
-    showToast('操作失败');
+    showToast('闁瑰灝绉崇紞鏃€寰勬潏顐バ?);
   }
 }
 
-// ===== 评论 =====
+// ===== 閻犲洤瀚?=====
 async function openComments(postId) {
   currentPostId = postId;
   const commentModal = $('#commentModal');
@@ -159,17 +159,17 @@ async function openComments(postId) {
 
 async function loadComments(postId) {
   const commentListEl = $('#commentList');
-  commentListEl.innerHTML = '<div class="tip">加载中...</div>';
+  commentListEl.innerHTML = '<div class="tip">闁告梻濮惧ù鍥ㄧ▔?..</div>';
   try {
     const { data } = await db.from('comments').select().eq('post_id', postId).order('created_at').get();
     if (!data || data.length === 0) {
-      commentListEl.innerHTML = '<div class="tip">暂无评论</div>';
+      commentListEl.innerHTML = '<div class="tip">闁哄棗鍊瑰Λ銈囨嫚閸曨噮鍟?/div>';
     } else {
       const tree = buildCommentTree(data);
       commentListEl.innerHTML = tree.map(c => renderCommentItem(c, false)).join('');
       bindCommentEvents();
     }
-  } catch (err) { commentListEl.innerHTML = '<div class="tip">加载失败</div>'; }
+  } catch (err) { commentListEl.innerHTML = '<div class="tip">闁告梻濮惧ù鍥ㄥ緞鏉堫偉袝</div>'; }
 }
 
 function buildCommentTree(comments) {
@@ -191,8 +191,8 @@ function renderCommentItem(c, isChild) {
     '<span class="comment-time">' + formatTime(c.created_at) + '</span></div>' +
     '<div class="comment-text">' + escapeHtml(c.content) + '</div>' +
     '<div class="comment-actions">' +
-    '<span class="comment-reply" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span>' +
-    (c.nickname === currentUser ? '<span class="comment-delete" data-delete-id="' + c.id + '">删除</span>' : '') +
+    '<span class="comment-reply" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">闁搞儳鍋涢ˇ?/span>' +
+    (c.nickname === currentUser ? '<span class="comment-delete" data-delete-id="' + c.id + '">闁告帞濞€濞?/span>' : '') +
     '</div>' +
     (c.children && c.children.length ? c.children.map(ch => renderCommentItem(ch, true)).join('') : '') +
     '</div></div>';
@@ -204,7 +204,7 @@ function bindCommentEvents() {
     el.addEventListener('click', () => {
       replyTo = { id: el.dataset.replyId, nickname: el.dataset.replyNick };
       $('#replyHint').style.display = 'block';
-      $('#replyHint').textContent = '回复 @' + replyTo.nickname;
+      $('#replyHint').textContent = '闁搞儳鍋涢ˇ?@' + replyTo.nickname;
       $('#commentInput').focus();
     });
   });
@@ -216,29 +216,29 @@ function bindCommentEvents() {
 function cancelReply() {
   replyTo = null;
   $('#replyHint').style.display = 'none';
-  $('#commentInput').placeholder = '说点什么...';
+  $('#commentInput').placeholder = '閻犲洤顕崑锝嗙閳ь剚绋?..';
 }
 
 async function deleteComment(commentId, postId) {
-  if (!confirm('确定要删除这条评论吗？')) return;
+  if (!confirm('缁绢収鍠栭悾鍓ф啺娴ｇ鐏╅梻鍕╁€涚换鏍级闄囬惁搴ｆ媼閸濆嫭鍋嬮柨?)) return;
   try {
     await db.rpc('delete_comment_rpc', { p_comment_id: commentId, p_account: currentUser });
-    showToast('评论已删除');
+    showToast('閻犲洤瀚鎴濐啅閹绘帒鐏╅梻?);
     await loadComments(postId);
     const { data } = await db.from('comments').select('id').eq('post_id', postId).get();
     const newCount = data ? data.length : 0;
     await db.from('posts').update({ comment_count: newCount }).eq('id', postId);
     loadPosts();
-  } catch (err) { showToast('删除失败'); }
+  } catch (err) { showToast('闁告帞濞€濞呭孩寰勬潏顐バ?); }
 }
 
-// 发送评论
+// 闁告瑦鍨块埀顑挎祰閻﹀海鎷?
 function bindSendComment() {
   const sendCommentBtn = $('#sendComment');
   const commentInput = $('#commentInput');
   sendCommentBtn.addEventListener('click', async () => {
     const content = commentInput.value.trim();
-    if (!content) { showToast('请输入评论内容'); return; }
+    if (!content) { showToast('閻犲洨鏌夌欢顓㈠礂閵夈劎妲戦悹浣告惈閸炲鈧?); return; }
     if (!currentPostId) return;
     try {
       await db.rpc('add_comment', {
@@ -251,7 +251,7 @@ function bindSendComment() {
       commentInput.value = '';
       await loadComments(currentPostId);
       loadPosts();
-    } catch (err) { showToast('评论失败: ' + (err.message || '网络错误')); }
+    } catch (err) { showToast('閻犲洤瀚鎴炲緞鏉堫偉袝: ' + (err.message || '缂傚啯鍨圭划鍫曟煥濞嗘帩鍤?)); }
   });
 }
 
