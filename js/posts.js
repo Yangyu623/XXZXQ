@@ -246,18 +246,7 @@ async function deleteComment(commentId, postId) {
 function bindSendComment() {
   const sendCommentBtn = $('#sendComment');
   const commentInput = $('#commentInput');
-  // ?????10??
-  let commentCooldown = 0;
-  function getCommentCooldown() {
-    const last = localStorage.getItem('comment_last_attempt');
-    if (!last) return 0;
-    return Math.max(0, 10000 - (Date.now() - parseInt(last)));
-  }
-
   sendCommentBtn.addEventListener('click', async () => {
-    const cd = getCommentCooldown();
-    if (cd > 0) { showToast('??? ' + Math.ceil(cd / 1000) + ' ?????'); return; }
-
     const content = commentInput.value.trim();
     if (!content) { showToast('请输入评论内容'); return; }
     if (!currentPostId) return;
@@ -268,7 +257,6 @@ function bindSendComment() {
       const { data } = await db.from('comments').select('id').eq('post_id', currentPostId).get();
       const newCount = data ? data.length : 0;
       await db.from('posts').update({ comment_count: newCount }).eq('id', currentPostId);
-      localStorage.setItem('comment_last_attempt', Date.now().toString());
       cancelReply();
       commentInput.value = '';
       await loadComments(currentPostId);
