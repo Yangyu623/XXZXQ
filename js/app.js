@@ -3,10 +3,10 @@
 // ========== 全局状态 ==========
 let currentUser = null;
 let currentUserNickname = '';
-let currentPostId = null;
+// currentPostId declared in posts.js
 let isRegisterMode = true;
 let selectedImages = [];
-let replyTo = null;
+// replyTo declared in posts.js
 
 // ========== 底部导航 ==========
 $$('#bottomNav .nav-item').forEach(el => {
