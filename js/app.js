@@ -2,6 +2,7 @@
 
 // ========== 全局状态 ==========
 let currentUser = null;
+let currentUserNickname = '';
 let currentPostId = null;
 let isRegisterMode = true;
 let selectedImages = [];
