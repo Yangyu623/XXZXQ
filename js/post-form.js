@@ -100,7 +100,8 @@ function bindPostFormEvents() {
       showToast('内容包含违禁词：' + bannedHits.join('、'));
       return;
     }
- try {
+      const isAnonymous = document.getElementById('anonCheck') ? document.getElementById('anonCheck').checked : false;
+      try {
       let imageUrls = [];
       if (selectedImages.length > 0) {
         for (const f of selectedImages) {
@@ -109,12 +110,12 @@ function bindPostFormEvents() {
           imageUrls.push(url);
         }
       }
-      await     await db.rpc('create_post_rpc', {
+      await db.rpc('create_post_rpc', {
       p_account: currentUser,
       p_nickname: currentUserNickname || currentUser,
       p_content: content,
       p_is_anonymous: isAnonymous,
-      p_images: JSON.stringify(uploadedUrls)
+      p_images: JSON.stringify(imageUrls)
     })
     } catch (err) {
       showToast('发布失败: ' + (err.message || '网络错误'));
