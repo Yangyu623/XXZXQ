@@ -37,6 +37,7 @@ function validatePassword(pwd) {
 
 async function doRegister(account, nickname, password, confirm) {
   if (!account) { showToast('请输入账号'); return; }
+  if (account.length < 8) { showToast('账号至少8位'); return; }
   if (!/^[a-zA-Z0-9_]+$/.test(account)) { showToast('账号只含字母数字下划线'); return; }
   if (password !== confirm) { showToast('两次密码不一致'); return; }
   const err = validatePassword(password);
@@ -100,12 +101,30 @@ async function loadUserDisplayName() {
   } catch (e) { currentUserNickname = currentUser; }
 }
 
+
+// 账号规则实时检测
+setTimeout(function () {
+  var ar = document.getElementById("accRules");
+  var ai = document.getElementById("accountInput");
+  if (!ar || !ai) return;
+  var spans = ar.querySelectorAll(".rule");
+  ai.addEventListener("input", function () {
+    var v = ai.value;
+    var ok = [v.length >= 8, !v || /^[a-zA-Z0-9_]+$/.test(v)];
+    for (var i = 0; i < spans.length; i++) {
+      if (ok[i]) { spans[i].className = "rule ok"; spans[i].innerHTML = spans[i].innerHTML.replace("❌", "✅"); }
+      else { spans[i].className = "rule"; spans[i].innerHTML = spans[i].innerHTML.replace("✅", "❌"); }
+    }
+  });
+}, 200);
+
 function bindAuthEvents() {
   auth_loginBtn().addEventListener('click', async () => {
     const account = auth_accountInput().value.trim();
     const nickname = auth_nicknameInput().value.trim();
     const pwd = auth_passwordInput().value;
     if (!account) { showToast('请输入账号'); return; }
+    if (account.length < 8) { showToast('账号至少8位'); return; }
     if (account.length > 20) { showToast('账号最多20个字符'); return; }
     if (!pwd) { showToast('请输入密码'); return; }
 
