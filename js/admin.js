@@ -70,7 +70,7 @@ async function loadAdminUsers() {
   list.innerHTML = '<div class="tip">加载中...</div>';
   try {
     const tabStatus = adminTab === 'pending' ? 'pending' : 'approved';
-    const { data } = await db.rpc('get_users_for_admin', { p_admin_account: currentUser, p_status: tabStatus });
+    const { data } = await db.rpc('get_users_for_admin', { _admin_account: currentUser, _status: tabStatus });
 
     const filtered = keyword ? (data || []).filter(u => (u.nickname || u.account || '').toLowerCase().includes(keyword)) : (data || []);
 
