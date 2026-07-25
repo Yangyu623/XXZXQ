@@ -116,7 +116,11 @@ function bindPostFormEvents() {
       p_content: content,
       p_is_anonymous: isAnonymous,
       p_images: JSON.stringify(imageUrls)
-    })
+    });
+      showToast('????');
+      postContent.value = '';
+      selectedImages = [];
+      renderImageGrid();
     } catch (err) {
       showToast('发布失败: ' + (err.message || '网络错误'));
     }
