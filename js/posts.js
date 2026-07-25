@@ -84,7 +84,7 @@ async function loadPosts(reset = true) {
       const btn = document.createElement('button');
       btn.id = 'btnLoadMore';
       btn.className = 'btn btn-outline btn-block';
-      btn.textContent = '\u52a0\u8f7d\u66f4\u591a';
+      btn.textContent = '\u533f\u540d';
       btn.addEventListener('click', () => loadPosts(false));
       const wrapper = document.createElement('div');
       wrapper.className = 'load-more';
@@ -100,7 +100,7 @@ function renderPostCard(p, i, likedSet) {
   const imgHtml = imgs.length ? '<div class="post-images">' + imgs.map(u => '<img src="' + escapeHtml(u) + '" onclick="event.stopPropagation();openImageViewer(\'' + escapeHtml(u).replace(/'/g, "\\'") + '\')" />').join('') + '</div>' : '';
   return '<div class="post-card" style="animation-delay:' + (i * 0.03) + 's">' +
     '<div class="post-header"><div class="post-avatar">' + getAvatarEmoji(p.nickname) + '</div>' +
-    '<span class="post-nickname">' + (p.is_anonymous ? '\u52a0\u8f7d\u66f4\u591a' : escapeHtml(p.nickname)) + '</span>' +
+    '<span class="post-nickname">' + (p.is_anonymous ? '\u533f\u540d' : escapeHtml(p.nickname)) + '</span>' +
     '<span class="post-time">' + formatTime(p.created_at) + '</span></div>' +
     '<div class="post-body">' + escapeHtml(p.content) + '</div>' + imgHtml +
     '<div class="post-actions">' +

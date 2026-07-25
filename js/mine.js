@@ -135,7 +135,7 @@ function bindProfileEvents() {
 
     try {
       const { data } = await db.rpc('check_old_password', { p_account: currentUser, p_password: oldPwd });
-      if (!data || data === false) { showToast('请输入昵称'); return; }
+      if (!data || data === false) { showToast('原密码错误'); return; }
 
       if (newNick !== currentUserNickname) {
         const { data: userData } = await db.from('users').select('nickname_updated_at').eq('account', currentUser).get();
