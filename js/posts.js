@@ -124,7 +124,7 @@ async function deletePost(postId) {
   if (!confirm('确认删除这条帖子吗？')) return;
   try {
     await db.rpc('delete_post_rpc', { p_post_id: postId, p_account: currentUser });
-    showToast('\u8fd8\u6ca1\u6709\u8bc4\u8bba');
+    showToast('帖子已删除');
     postsCache = postsCache.filter(p => p.id !== postId);
     renderPostList();
   } catch (err) { showToast('\u64cd\u4f5c\u5931\u8d25'); }
