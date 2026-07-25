@@ -82,7 +82,7 @@ async function loadAdminUsers() {
     list.innerHTML = filtered.map(u => '<div class="admin-user-item">' +
       '<div class="admin-user-info">' +
       '<div class="admin-user-avatar">' + getAvatarEmoji(u.nickname) + '</div>' +
-      '<div><div class="admin-user-name">' + escapeHtml(u.account) + (u.is_admin ? ' 🛡️' : '') + '</div>' +
+      '<div><div class="admin-user-name">' + escapeHtml(u.account) + ' (' + escapeHtml(u.nickname) + ')' + (u.is_admin ? ' 🛡️' : '') + '</div>' +
       '<div class="admin-user-time">' + formatTime(u.created_at) + '</div></div>' +
       '</div>' +
       (adminTab === 'pending'
