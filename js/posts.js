@@ -193,7 +193,7 @@ function renderCommentItem(c, isChild) {
     '<div class="comment-text">' + escapeHtml(c.content) + '</div>' +
     '<div class="comment-actions">' +
     '<span class="comment-reply" data-reply-id="' + c.id + '" data-reply-nick="' + escapeHtml(c.nickname) + '">回复</span>' +
-    (c.nickname === (currentUserNickname || currentUser) ? '<span class="comment-delete" data-delete-id="' + c.id + '">删除</span>' : '') +
+    ((c.nickname === (currentUserNickname || currentUser) || window.isAdmin) ? '<span class="comment-delete" data-delete-id="' + c.id + '">删除</span>' : '') +
     '</div>' +
     (c.children && c.children.length ? c.children.map(ch => renderCommentItem(ch, true)).join('') : '') +
     '</div></div>';
