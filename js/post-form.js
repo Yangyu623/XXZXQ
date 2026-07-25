@@ -117,7 +117,7 @@ function bindPostFormEvents() {
       p_is_anonymous: isAnonymous,
       p_images: JSON.stringify(imageUrls)
     });
-      showToast('????');
+      showToast('发布成功');
       postContent.value = '';
       selectedImages = [];
       renderImageGrid();
