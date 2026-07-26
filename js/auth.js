@@ -124,11 +124,11 @@ function bindAuthEvents() {
     const nickname = auth_nicknameInput().value.trim();
     const pwd = auth_passwordInput().value;
     if (!account) { showToast('请输入账号'); return; }
-    if (account.length < 8) { showToast('账号至少8位'); return; }
     if (account.length > 20) { showToast('账号最多20个字符'); return; }
     if (!pwd) { showToast('请输入密码'); return; }
 
     if (isRegisterMode) {
+      if (account.length < 8) { showToast('账号至少8位'); return; }
       const cd = getRegCooldown();
       if (cd > 0) { showToast('请等待 ' + Math.ceil(cd / 1000) + ' 秒后再注册'); return; }
       const userAnswer = parseInt(document.getElementById('captchaInput').value);
